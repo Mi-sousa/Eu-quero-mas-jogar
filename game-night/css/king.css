@@ -1,0 +1,271 @@
+/* ============================================================
+   KING.CSS — King module styles
+   ============================================================ */
+
+/* ── Module header ──────────────────────────────────────────── */
+.module-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.module-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.module-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 3px;
+}
+
+.module-header-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Round pills ────────────────────────────────────────────── */
+.round-pills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.round-pill {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  padding: 4px 11px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.round-pill.active {
+  background: var(--gold);
+  color: #0f0e13;
+  border-color: var(--gold);
+  font-weight: 500;
+}
+
+.round-pill.done {
+  border-color: rgba(201, 168, 76, 0.4);
+  color: rgba(201, 168, 76, 0.7);
+}
+
+.round-pill:hover:not(.active) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Totals bar ─────────────────────────────────────────────── */
+.totals-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.total-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+
+.total-card.rank-1 {
+  border-color: rgba(255, 215, 0, 0.4);
+  background: rgba(255, 215, 0, 0.04);
+}
+
+.total-card .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Playfair Display', serif;
+  flex-shrink: 0;
+}
+
+.total-card .tc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.total-card .tc-name {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.total-card .tc-rank {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 1px;
+}
+
+.total-card .tc-score {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+/* ── Scorecard table ────────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+#scorecard {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 440px;
+  background: var(--bg-card);
+}
+
+#scorecard th {
+  padding: 9px 10px;
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  background: var(--bg-surface);
+}
+
+#scorecard th:first-child {
+  text-align: left;
+  min-width: 140px;
+}
+
+#scorecard td {
+  padding: 8px 10px;
+  font-size: 14px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+}
+
+#scorecard td:first-child {
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+#scorecard tr:last-child td {
+  border-bottom: none;
+}
+
+/* Row variants */
+.row-section-header td {
+  background: var(--bg-row);
+  padding: 5px 10px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+.row-total td,
+.row-total2 td {
+  background: rgba(0, 0, 0, 0.25);
+  font-weight: 500;
+}
+
+.row-total td:first-child,
+.row-total2 td:first-child {
+  color: var(--text-main);
+}
+
+.row-grandtotal td {
+  background: rgba(201, 168, 76, 0.08);
+  font-weight: 500;
+  border-top: 1px solid rgba(201, 168, 76, 0.3);
+}
+
+.row-grandtotal td:first-child {
+  color: var(--gold);
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+}
+
+/* Score inputs */
+.score-cell {
+  background: transparent;
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 14px;
+  width: 64px;
+  text-align: center;
+  padding: 4px 6px;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s, background 0.2s;
+  -moz-appearance: textfield;
+}
+
+.score-cell::-webkit-outer-spin-button,
+.score-cell::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.score-cell:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.05);
+}
+
+/* Computed value classes */
+.computed { font-weight: 500; }
+.c-neg   { color: var(--red); }
+.c-pos   { color: var(--green); }
+.c-zero  { color: var(--text-muted); }
+.c-gold  { color: var(--gold); font-family: 'Playfair Display', serif; font-size: 16px; }
+
+/* Player color dot in header */
+.player-color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* ── Action row ─────────────────────────────────────────────── */
+.actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
