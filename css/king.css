@@ -267,3 +267,39 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* Editable player name in total card */
+.player-name-edit {
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: var(--text-main);
+  font-family: 'DM Sans', sans-serif;
+  width: 100%;
+  padding: 1px 0;
+  transition: border-color 0.2s;
+}
+.player-name-edit:focus {
+  outline: none;
+  border-bottom-color: var(--gold);
+}
+
+/* Editable festa label */
+.row-label-edit {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed rgba(201,168,76,0.25);
+  color: var(--text-main);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  padding: 1px 2px;
+  width: 100%;
+  max-width: 130px;
+  transition: border-color 0.2s;
+}
+.row-label-edit:focus {
+  outline: none;
+  border-bottom-color: var(--gold);
+}
