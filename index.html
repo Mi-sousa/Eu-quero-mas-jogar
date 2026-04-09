@@ -3,74 +3,81 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Game Night — Marcador de Pontos</title>
+  <title>Game Night 🎲</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/home.css" />
   <link rel="stylesheet" href="css/king.css" />
 </head>
 <body>
 
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="topbar-brand">
-      <div class="topbar-title">♟ GAME NIGHT</div>
-      <div class="topbar-sub">Marcador de Pontos</div>
+  <!-- HOME SCREEN -->
+  <div id="screen-home" class="screen active">
+    <div class="home-bg">
+      <div class="home-blob blob-1"></div>
+      <div class="home-blob blob-2"></div>
+      <div class="home-blob blob-3"></div>
     </div>
-    <nav class="tab-row" id="tab-row">
-      <button class="tab-btn active" data-module="king">King</button>
-      <button class="tab-btn" data-module="coming-soon">+ Módulo</button>
-    </nav>
-  </header>
-
-  <!-- MODULES -->
-  <main>
-
-    <!-- KING MODULE -->
-    <section id="mod-king" class="module active">
-
-      <div class="module-header">
-        <div class="module-header-left">
-          <div class="module-title">♛ King</div>
-          <div class="module-sub">Seleciona a ronda</div>
+    <div class="home-content">
+      <div class="home-hero">
+        <div class="home-dice">🎲</div>
+        <h1 class="home-title">Game Night</h1>
+        <p class="home-subtitle">Quem vai vencer esta noite?</p>
+      </div>
+      <div class="home-grid">
+        <button class="game-card" onclick="openModule('king')">
+          <div class="game-card-icon">♛</div>
+          <div class="game-card-name">King</div>
+          <div class="game-card-desc">Cartas · Penalizações · Festas</div>
+          <div class="game-card-arrow">→</div>
+        </button>
+        <div class="game-card game-card--soon">
+          <div class="game-card-icon">🃏</div>
+          <div class="game-card-name">Sueca</div>
+          <div class="game-card-desc">Em breve</div>
         </div>
-        <div class="module-header-actions">
-          <button class="btn-secondary btn-sm" id="btn-add-player">+ Jogador</button>
-          <button class="btn-danger btn-sm" id="btn-reset">↺ Reset</button>
+        <div class="game-card game-card--soon">
+          <div class="game-card-icon">🀄</div>
+          <div class="game-card-name">Buraco</div>
+          <div class="game-card-desc">Em breve</div>
+        </div>
+        <div class="game-card game-card--soon">
+          <div class="game-card-icon">🎴</div>
+          <div class="game-card-name">Scopone</div>
+          <div class="game-card-desc">Em breve</div>
         </div>
       </div>
+      <p class="home-footer">Seleciona um jogo para começar</p>
+    </div>
+  </div>
 
-      <!-- Round pills -->
+  <!-- KING SCREEN -->
+  <div id="screen-king" class="screen">
+    <header class="topbar">
+      <button class="back-btn" onclick="goHome()">← Jogos</button>
+      <div class="topbar-brand">
+        <span class="topbar-title">♛ King</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-secondary btn-sm" id="btn-add-player">+ Jogador</button>
+        <button class="btn-danger btn-sm" id="btn-reset">↺ Reset</button>
+      </div>
+    </header>
+    <main class="module-main">
       <div class="round-pills" id="round-pills"></div>
-
-      <!-- Totals summary -->
       <div class="totals-bar" id="totals-bar"></div>
-
-      <!-- Scorecard table -->
       <div class="table-wrap">
         <table id="scorecard"></table>
       </div>
-
-      <!-- Action buttons -->
       <div class="actions-row">
         <button class="btn-primary" id="btn-save-round">✓ Guardar Ronda</button>
         <button class="btn-secondary" id="btn-add-festa">+ Festa</button>
         <button class="btn-danger" id="btn-remove-festa" style="display:none">− Festa</button>
       </div>
-
-    </section>
-
-    <!-- COMING SOON MODULE -->
-    <section id="mod-coming-soon" class="module">
-      <div class="coming-soon">
-        <div class="cs-icon">🎲</div>
-        <div class="cs-title">Mais módulos em breve</div>
-        <div class="cs-sub">Scopone, Sueca, Buraco, Uno...</div>
-      </div>
-    </section>
-
-  </main>
+    </main>
+  </div>
 
   <!-- ADD PLAYER MODAL -->
   <div class="modal-overlay" id="modal-overlay">
@@ -79,7 +86,7 @@
       <p>Adiciona um jogador à partida</p>
       <div class="mfield">
         <label for="pname-inp">Nome</label>
-        <input type="text" id="pname-inp" placeholder="Ex: João" maxlength="12" />
+        <input type="text" id="pname-inp" placeholder="Ex: João" maxlength="14" />
       </div>
       <div class="mfield">
         <label>Cor</label>
@@ -92,17 +99,12 @@
     </div>
   </div>
 
-  <!-- TOAST -->
   <div class="toast" id="toast"></div>
-
-  <!-- CONFETTI CONTAINER -->
   <div class="confetti-container" id="confetti-container"></div>
 
-  <!-- SCRIPTS -->
   <script src="js/state.js"></script>
   <script src="js/ui.js"></script>
   <script src="modules/king.js"></script>
   <script src="js/app.js"></script>
-
 </body>
 </html>

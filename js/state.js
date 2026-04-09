@@ -1,5 +1,5 @@
 /* ============================================================
-   STATE.JS — Application state & persistence
+   STATE.JS — Application state, calculations & persistence
    ============================================================ */
 
 const PALETTE = [
@@ -10,7 +10,15 @@ const PALETTE = [
 
 const NUM_ROUNDS = 8;
 
-// ── Initial state ────────────────────────────────────────────
+const PENALTY_ROWS = [
+  { key: 'no_vazar', defaultLabel: '🚫 Sem vazar' },
+  { key: 'copas',    defaultLabel: '♥ Copas'      },
+  { key: 'damas',    defaultLabel: '👸 Damas'      },
+  { key: 'homens',   defaultLabel: '🕺 Homens'     },
+  { key: 'porco',    defaultLabel: '🐷 Porco'      },
+  { key: 'dobro',    defaultLabel: '2✖ Dobro'      },
+];
+
 const DEFAULT_STATE = {
   players: [
     { id: 1, name: 'Jogador 1', color: '#c9a84c' },
@@ -25,70 +33,39 @@ const DEFAULT_STATE = {
 
 let state = deepClone(DEFAULT_STATE);
 
-// ── Helpers ──────────────────────────────────────────────────
 function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-// ── Persistence ──────────────────────────────────────────────
+/* ── Persistence ─────────────────────────────────────────────*/
 function saveState() {
-  try {
-    localStorage.setItem('gamenight-king', JSON.stringify(state));
-  } catch (e) {
-    console.warn('Could not save state:', e);
-  }
+  try { localStorage.setItem('gamenight-king', JSON.stringify(state)); }
+  catch (e) { console.warn('Could not save state:', e); }
 }
 
 function loadState() {
   try {
     const saved = localStorage.getItem('gamenight-king');
-    if (saved) {
-      state = JSON.parse(saved);
-    }
+    if (saved) state = JSON.parse(saved);
   } catch (e) {
     console.warn('Could not load state:', e);
     state = deepClone(DEFAULT_STATE);
   }
 }
 
-// ── State mutations ──────────────────────────────────────────
-function addPlayer(name, color) {
-  const id = state.nextId++;
-  state.players.push({ id, name, color });
-
-  // Ensure new player has entries in existing rounds
-  Object.values(state.rounds).forEach(rd => {
-    PENALTY_ROWS.forEach(pr => {
-      if (rd.penalties[pr.key][id] === undefined) {
-        rd.penalties[pr.key][id] = 0;
-      }
-    });
-    rd.festas.forEach(f => {
-      if (f[id] === undefined) f[id] = 0;
-    });
-  });
-
-  saveState();
-  return id;
-}
-
-function removePlayer(id) {
-  state.players = state.players.filter(p => p.id !== id);
-  saveState();
-}
-
+/* ── Round init ──────────────────────────────────────────────*/
 function initRound(r) {
   if (!state.rounds[r]) {
     const penalties = {};
     PENALTY_ROWS.forEach(pr => {
-      penalties[pr.key] = {};
-      state.players.forEach(p => { penalties[pr.key][p.id] = 0; });
+      penalties[pr.key] = { label: pr.defaultLabel, values: {} };
+      state.players.forEach(p => { penalties[pr.key].values[p.id] = 0; });
     });
     const festas = [];
     for (let i = 0; i < 4; i++) {
-      const f = {};
-      state.players.forEach(p => { f[p.id] = 0; });
-      festas.push(f);
+      const vals = {};
+      state.players.forEach(p => { vals[p.id] = 0; });
+      festas.push({ label: 'Festa ' + (i + 1), values: vals });
     }
     state.rounds[r] = { penalties, festas };
   } else {
@@ -96,45 +73,77 @@ function initRound(r) {
     const rd = state.rounds[r];
     state.players.forEach(p => {
       PENALTY_ROWS.forEach(pr => {
-        if (rd.penalties[pr.key][p.id] === undefined) {
-          rd.penalties[pr.key][p.id] = 0;
+        if (!rd.penalties[pr.key]) {
+          rd.penalties[pr.key] = { label: pr.defaultLabel, values: {} };
+        }
+        if (rd.penalties[pr.key].values[p.id] === undefined) {
+          rd.penalties[pr.key].values[p.id] = 0;
         }
       });
       rd.festas.forEach(f => {
-        if (f[p.id] === undefined) f[p.id] = 0;
+        if (f.values[p.id] === undefined) f.values[p.id] = 0;
       });
     });
   }
 }
 
-function setPenalty(round, key, pid, value) {
+/* ── Mutations ───────────────────────────────────────────────*/
+function addPlayer(name, color) {
+  const id = state.nextId++;
+  state.players.push({ id, name, color });
+  Object.keys(state.rounds).forEach(r => {
+    const rd = state.rounds[r];
+    PENALTY_ROWS.forEach(pr => {
+      if (rd.penalties[pr.key]) rd.penalties[pr.key].values[id] = 0;
+    });
+    rd.festas.forEach(f => { f.values[id] = 0; });
+  });
+  saveState();
+  return id;
+}
+
+function renamePlayer(id, name) {
+  const p = state.players.find(p => p.id === id);
+  if (p) { p.name = name; saveState(); }
+}
+
+function setPenaltyValue(round, key, pid, value) {
   initRound(round);
-  const max = PENALTY_ROWS.find(r => r.key === key).pts;
-  state.rounds[round].penalties[key][pid] = Math.min(Math.max(0, value), max);
+  state.rounds[round].penalties[key].values[pid] = parseInt(value) || 0;
   saveState();
 }
 
-function setFesta(round, festaIndex, pid, value) {
+function setPenaltyLabel(round, key, label) {
   initRound(round);
-  state.rounds[round].festas[festaIndex][pid] = value;
+  state.rounds[round].penalties[key].label = label;
+  saveState();
+}
+
+function setFestaValue(round, fi, pid, value) {
+  initRound(round);
+  state.rounds[round].festas[fi].values[pid] = parseInt(value) || 0;
+  saveState();
+}
+
+function setFestaLabel(round, fi, label) {
+  initRound(round);
+  state.rounds[round].festas[fi].label = label;
   saveState();
 }
 
 function addFesta(round) {
   initRound(round);
-  const f = {};
-  state.players.forEach(p => { f[p.id] = 0; });
-  state.rounds[round].festas.push(f);
+  const vals = {};
+  state.players.forEach(p => { vals[p.id] = 0; });
+  const n = state.rounds[round].festas.length + 1;
+  state.rounds[round].festas.push({ label: 'Festa ' + n, values: vals });
   saveState();
 }
 
 function removeFesta(round) {
   initRound(round);
   const festas = state.rounds[round].festas;
-  if (festas.length > 1) {
-    festas.pop();
-    saveState();
-  }
+  if (festas.length > 1) { festas.pop(); saveState(); }
 }
 
 function resetGame() {
@@ -142,40 +151,34 @@ function resetGame() {
   saveState();
 }
 
-// ── Score calculations ───────────────────────────────────────
+/* ── Calculations ────────────────────────────────────────────*/
 function calcTotal1(r) {
-  const rd = state.rounds[r];
-  if (!rd) return {};
+  const rd = state.rounds[r]; if (!rd) return {};
   const totals = {};
   state.players.forEach(p => { totals[p.id] = 0; });
   PENALTY_ROWS.forEach(pr => {
-    state.players.forEach(p => {
-      totals[p.id] -= (rd.penalties[pr.key][p.id] || 0);
-    });
+    if (rd.penalties[pr.key]) {
+      state.players.forEach(p => {
+        totals[p.id] -= (rd.penalties[pr.key].values[p.id] || 0);
+      });
+    }
   });
   return totals;
 }
 
 function calcTotal2(r) {
-  const rd = state.rounds[r];
-  if (!rd) return {};
+  const rd = state.rounds[r]; if (!rd) return {};
   const totals = {};
   state.players.forEach(p => { totals[p.id] = 0; });
   rd.festas.forEach(f => {
-    state.players.forEach(p => {
-      totals[p.id] += (f[p.id] || 0);
-    });
+    state.players.forEach(p => { totals[p.id] += (f.values[p.id] || 0); });
   });
   return totals;
 }
 
 function calcGrandTotal(r) {
-  const t1 = calcTotal1(r);
-  const t2 = calcTotal2(r);
-  const gt = {};
-  state.players.forEach(p => {
-    gt[p.id] = (t1[p.id] || 0) + (t2[p.id] || 0);
-  });
+  const t1 = calcTotal1(r), t2 = calcTotal2(r), gt = {};
+  state.players.forEach(p => { gt[p.id] = (t1[p.id] || 0) + (t2[p.id] || 0); });
   return gt;
 }
 

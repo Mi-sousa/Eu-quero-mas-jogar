@@ -1,35 +1,15 @@
 /* ============================================================
-   KING.JS — King module: penalty rows config + rendering
+   KING.JS — King module rendering & interaction
    ============================================================ */
-
-// ── Penalty row definitions ──────────────────────────────────
-// Each row: { key, label, pts (max points) }
-const PENALTY_ROWS = [
-  { key: 'no_vazar', label: '🚫 Sem vazar', pts: 20  },
-  { key: 'copas',    label: '♥ Copas',      pts: 20  },
-  { key: 'damas',    label: '👸 Damas',      pts: 50  },
-  { key: 'homens',   label: '🕺 Homens',     pts: 30  },
-  { key: 'porco',    label: '🐷 Porco',      pts: 160 },
-  { key: 'dobro',    label: '2✖ Dobro',      pts: 90  },
-];
-
-// ── Render functions ─────────────────────────────────────────
 
 function renderRoundPills() {
   const container = document.getElementById('round-pills');
   container.innerHTML = '';
-
   for (let r = 1; r <= NUM_ROUNDS; r++) {
     const btn = document.createElement('button');
-    const isDone = !!state.rounds[r];
-    const isCurrent = r === state.currentRound;
-
-    btn.className = 'round-pill' + (isCurrent ? ' active' : isDone ? ' done' : '');
+    btn.className = 'round-pill' + (r === state.currentRound ? ' active' : state.rounds[r] ? ' done' : '');
     btn.textContent = 'Ronda ' + r;
-    btn.addEventListener('click', () => {
-      state.currentRound = r;
-      renderKing();
-    });
+    btn.addEventListener('click', () => { state.currentRound = r; renderKing(); });
     container.appendChild(btn);
   }
 }
@@ -37,28 +17,46 @@ function renderRoundPills() {
 function renderTotalsBar() {
   const container = document.getElementById('totals-bar');
   container.innerHTML = '';
-
   const rankings = getRankings();
   const medals = ['♛', '♜', '♝'];
 
   rankings.forEach((p, i) => {
     const card = document.createElement('div');
     card.className = 'total-card' + (i === 0 ? ' rank-1' : '');
-
-    const rankLabel = i < 3
-      ? medals[i] + ' ' + (i + 1) + 'º lugar'
-      : (i + 1) + 'º lugar';
+    const rankLabel = (i < 3 ? medals[i] + ' ' : '') + (i + 1) + 'º lugar';
 
     card.innerHTML = `
-      <div class="avatar" style="background:${p.color}22; color:${p.color}">
+      <div class="avatar" style="background:${p.color}22;color:${p.color}" title="Clica para mudar cor">
         ${getInitials(p.name)}
       </div>
       <div class="tc-info">
-        <div class="tc-name">${p.name}</div>
+        <input
+          class="player-name-edit"
+          type="text"
+          value="${p.name}"
+          maxlength="14"
+          data-pid="${p.id}"
+          title="Clica para editar o nome"
+        />
         <div class="tc-rank">${rankLabel}</div>
       </div>
       <div class="tc-score">${p.total}</div>
     `;
+
+    // Rename on blur/enter
+    const input = card.querySelector('.player-name-edit');
+    input.addEventListener('blur', () => {
+      const newName = input.value.trim();
+      if (newName && newName !== p.name) {
+        renamePlayer(p.id, newName);
+        renderKing();
+        showToast('Nome atualizado!');
+      }
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') input.blur();
+    });
+
     container.appendChild(card);
   });
 }
@@ -67,167 +65,129 @@ function renderScorecard() {
   const tbl = document.getElementById('scorecard');
   initRound(state.currentRound);
   const rd = state.rounds[state.currentRound];
-
   const t1 = calcTotal1(state.currentRound);
   const t2 = calcTotal2(state.currentRound);
   const gt = calcGrandTotal(state.currentRound);
+  const numP = state.players.length;
 
-  const numPlayers = state.players.length;
-
-  // ── Header ──────────────────────────────────────────────────
+  // ── Header
   let html = '<thead><tr><th>Categoria</th>';
   state.players.forEach(p => {
-    html += `<th>
-      <span class="player-color-dot" style="background:${p.color}"></span>
-      ${p.name}
-    </th>`;
+    html += `<th><span class="player-color-dot" style="background:${p.color}"></span>${p.name}</th>`;
   });
   html += '</tr></thead><tbody>';
 
-  // ── Penalties section ────────────────────────────────────────
-  html += `<tr class="row-section-header">
-    <td colspan="${1 + numPlayers}">Penalizações (pontos negativos)</td>
-  </tr>`;
-
+  // ── Penalties
+  html += `<tr class="row-section-header"><td colspan="${1 + numP}">Penalizações (pontos negativos)</td></tr>`;
   PENALTY_ROWS.forEach(pr => {
-    html += `<tr class="row-penalty">
-      <td>
-        ${pr.label}
-        <span style="font-size:10px; color:var(--text-muted)"> (max ${pr.pts})</span>
-      </td>`;
-
+    const labelVal = rd.penalties[pr.key] ? rd.penalties[pr.key].label : pr.defaultLabel;
+    html += `<tr class="row-penalty"><td>
+      <input class="row-label-edit" type="text" value="${labelVal}" data-type="pen-label" data-key="${pr.key}" />
+    </td>`;
     state.players.forEach(p => {
-      const v = rd.penalties[pr.key][p.id] || 0;
-      html += `<td>
-        <input
-          class="score-cell"
-          type="number"
-          min="0"
-          max="${pr.pts}"
-          value="${v}"
-          data-type="pen"
-          data-key="${pr.key}"
-          data-pid="${p.id}"
-        />
-      </td>`;
+      const v = rd.penalties[pr.key] ? (rd.penalties[pr.key].values[p.id] || 0) : 0;
+      html += `<td><input class="score-cell" type="number" value="${v}" data-type="pen" data-key="${pr.key}" data-pid="${p.id}" /></td>`;
     });
     html += '</tr>';
   });
 
-  // ── Total 1 ──────────────────────────────────────────────────
-  html += '<tr class="row-total"><td>Total 1 (pontos negativos)</td>';
+  // Total 1
+  html += `<tr class="row-total"><td>Total 1 (pontos negativos)</td>`;
   state.players.forEach(p => {
-    const v = t1[p.id];
-    html += `<td class="computed ${scoreClass(v, false)}" data-total1="${p.id}">${fmt(v)}</td>`;
+    html += `<td class="computed ${scoreClass(t1[p.id], false)}" data-total1="${p.id}">${fmt(t1[p.id])}</td>`;
   });
   html += '</tr>';
 
-  // ── Festas section ───────────────────────────────────────────
-  html += `<tr class="row-section-header">
-    <td colspan="${1 + numPlayers}">Festas (pontos positivos)</td>
-  </tr>`;
-
+  // ── Festas
+  html += `<tr class="row-section-header"><td colspan="${1 + numP}">Festas (pontos positivos)</td></tr>`;
   rd.festas.forEach((f, i) => {
-    html += `<tr class="row-festa"><td>Festa ${i + 1}</td>`;
+    html += `<tr class="row-festa"><td>
+      <input class="row-label-edit" type="text" value="${f.label}" data-type="festa-label" data-fi="${i}" />
+    </td>`;
     state.players.forEach(p => {
-      const v = f[p.id] || 0;
-      html += `<td>
-        <input
-          class="score-cell"
-          type="number"
-          value="${v}"
-          data-type="festa"
-          data-fi="${i}"
-          data-pid="${p.id}"
-        />
-      </td>`;
+      const v = f.values[p.id] || 0;
+      html += `<td><input class="score-cell" type="number" value="${v}" data-type="festa" data-fi="${i}" data-pid="${p.id}" /></td>`;
     });
     html += '</tr>';
   });
 
-  // ── Total 2 ──────────────────────────────────────────────────
-  html += '<tr class="row-total2"><td>Total 2 (pontos positivos)</td>';
+  // Total 2
+  html += `<tr class="row-total2"><td>Total 2 (pontos positivos)</td>`;
   state.players.forEach(p => {
-    const v = t2[p.id];
-    html += `<td class="computed ${scoreClass(v, true)}" data-total2="${p.id}">${fmt(v)}</td>`;
+    html += `<td class="computed ${scoreClass(t2[p.id], true)}" data-total2="${p.id}">${fmt(t2[p.id])}</td>`;
   });
   html += '</tr>';
 
-  // ── Grand total ──────────────────────────────────────────────
-  html += '<tr class="row-grandtotal"><td>♛ Soma Total</td>';
+  // Grand total
+  html += `<tr class="row-grandtotal"><td>♛ Soma Total</td>`;
   state.players.forEach(p => {
-    const v = gt[p.id];
-    html += `<td class="computed c-gold" data-grandtotal="${p.id}">${fmt(v)}</td>`;
+    html += `<td class="computed c-gold" data-grandtotal="${p.id}">${fmt(gt[p.id])}</td>`;
   });
   html += '</tr></tbody>';
 
   tbl.innerHTML = html;
 
-  // Attach input listeners
+  // Attach score input listeners
   tbl.querySelectorAll('.score-cell').forEach(input => {
     input.addEventListener('input', onCellInput);
   });
 
-  // Show/hide remove festa button
+  // Attach label edit listeners
+  tbl.querySelectorAll('.row-label-edit').forEach(input => {
+    input.addEventListener('blur', onLabelEdit);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
+  });
+
   document.getElementById('btn-remove-festa').style.display =
     rd.festas.length > 1 ? '' : 'none';
 }
 
-// ── Cell input handler ───────────────────────────────────────
 function onCellInput(e) {
   const el = e.target;
   const pid = parseInt(el.dataset.pid);
   const v = parseInt(el.value) || 0;
   const r = state.currentRound;
-
   if (el.dataset.type === 'pen') {
-    setPenalty(r, el.dataset.key, pid, v);
-    const max = PENALTY_ROWS.find(row => row.key === el.dataset.key).pts;
-    el.value = Math.min(Math.max(0, v), max);
+    setPenaltyValue(r, el.dataset.key, pid, v);
   } else {
-    setFesta(r, parseInt(el.dataset.fi), pid, v);
+    setFestaValue(r, parseInt(el.dataset.fi), pid, v);
   }
-
-  // Update computed totals without full re-render
   updateComputedTotals();
+}
+
+function onLabelEdit(e) {
+  const el = e.target;
+  const r = state.currentRound;
+  const label = el.value.trim() || el.value;
+  if (!label) return;
+  if (el.dataset.type === 'pen-label') {
+    setPenaltyLabel(r, el.dataset.key, label);
+  } else if (el.dataset.type === 'festa-label') {
+    setFestaLabel(r, parseInt(el.dataset.fi), label);
+  }
 }
 
 function updateComputedTotals() {
   const r = state.currentRound;
-  const t1 = calcTotal1(r);
-  const t2 = calcTotal2(r);
-  const gt = calcGrandTotal(r);
-
+  const t1 = calcTotal1(r), t2 = calcTotal2(r), gt = calcGrandTotal(r);
   state.players.forEach(p => {
-    const t1Cell = document.querySelector(`[data-total1="${p.id}"]`);
-    const t2Cell = document.querySelector(`[data-total2="${p.id}"]`);
-    const gtCell = document.querySelector(`[data-grandtotal="${p.id}"]`);
-
-    if (t1Cell) {
-      t1Cell.textContent = fmt(t1[p.id]);
-      t1Cell.className = `computed ${scoreClass(t1[p.id], false)}`;
-    }
-    if (t2Cell) {
-      t2Cell.textContent = fmt(t2[p.id]);
-      t2Cell.className = `computed ${scoreClass(t2[p.id], true)}`;
-    }
-    if (gtCell) {
-      gtCell.textContent = fmt(gt[p.id]);
-      gtCell.className = 'computed c-gold';
-    }
+    const c1 = document.querySelector(`[data-total1="${p.id}"]`);
+    const c2 = document.querySelector(`[data-total2="${p.id}"]`);
+    const cg = document.querySelector(`[data-grandtotal="${p.id}"]`);
+    if (c1) { c1.textContent = fmt(t1[p.id]); c1.className = `computed ${scoreClass(t1[p.id], false)}`; }
+    if (c2) { c2.textContent = fmt(t2[p.id]); c2.className = `computed ${scoreClass(t2[p.id], true)}`; }
+    if (cg) { cg.textContent = fmt(gt[p.id]); cg.className = 'computed c-gold'; }
   });
-
   renderTotalsBar();
 }
 
-// ── Full King render ─────────────────────────────────────────
 function renderKing() {
   renderRoundPills();
   renderTotalsBar();
   renderScorecard();
 }
 
-// ── Add Player modal ─────────────────────────────────────────
+/* ── Add player modal ────────────────────────────────────────*/
 let selectedColor = PALETTE[0];
 
 function openAddPlayerModal() {
@@ -245,10 +205,7 @@ function renderColorPicker() {
     const dot = document.createElement('div');
     dot.className = 'cdot' + (color === selectedColor ? ' sel' : '');
     dot.style.background = color;
-    dot.addEventListener('click', () => {
-      selectedColor = color;
-      renderColorPicker();
-    });
+    dot.addEventListener('click', () => { selectedColor = color; renderColorPicker(); });
     container.appendChild(dot);
   });
 }
@@ -256,12 +213,9 @@ function renderColorPicker() {
 function confirmAddPlayer() {
   const name = document.getElementById('pname-inp').value.trim();
   if (!name) { showToast('Insere um nome'); return; }
-
-  const duplicate = state.players.find(
-    p => p.name.toLowerCase() === name.toLowerCase()
-  );
-  if (duplicate) { showToast('Nome já existe'); return; }
-
+  if (state.players.find(p => p.name.toLowerCase() === name.toLowerCase())) {
+    showToast('Nome já existe'); return;
+  }
   addPlayer(name, selectedColor);
   closeModal();
   renderKing();
