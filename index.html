@@ -1,110 +1,500 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Game Night 🎲</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/home.css" />
-  <link rel="stylesheet" href="css/king.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Game Night 🎲</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c9a84c;--gold-light:#f0d080;
+  --bg-deep:#0f0e13;--bg-card:#1a1825;--bg-surface:#221f30;--bg-row:#13121a;
+  --text-main:#f0ead6;--text-muted:#8a8099;
+  --red:#d64545;--green:#4caf7a;
+  --border:rgba(201,168,76,0.15);--border-h:rgba(201,168,76,0.4);
+}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text-main);font-size:14px}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+
+/* ── HOME ── */
+.home-wrap{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 60px;overflow:hidden}
+.blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.18;pointer-events:none}
+.b1{width:500px;height:500px;background:#c9a84c;top:-100px;right:-100px;animation:drift 12s ease-in-out infinite alternate}
+.b2{width:400px;height:400px;background:#5b8dd9;bottom:-80px;left:-80px;animation:drift 16s ease-in-out infinite alternate-reverse}
+.b3{width:300px;height:300px;background:#4caf7a;top:40%;left:40%;animation:drift 10s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(30px,20px) scale(1.08)}}
+.home-hero{text-align:center;margin-bottom:48px;position:relative;z-index:1}
+.dice{font-size:56px;display:inline-block;animation:bounce 2.4s ease-in-out infinite;margin-bottom:14px}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.home-title{font-family:'Playfair Display',serif;font-size:clamp(40px,10vw,64px);font-weight:900;color:var(--gold);letter-spacing:2px;line-height:1;margin-bottom:10px}
+.home-sub{font-size:15px;color:var(--text-muted);font-style:italic}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;width:100%;max-width:600px;position:relative;z-index:1}
+.game-card{background:rgba(26,24,37,.85);border:1px solid var(--border);border-radius:16px;padding:22px 20px;text-align:left;position:relative;overflow:hidden;backdrop-filter:blur(8px);transition:transform .2s,border-color .2s;font-family:'DM Sans',sans-serif;cursor:pointer}
+.game-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.06) 0%,transparent 60%);pointer-events:none}
+.game-card:not(.soon):hover{transform:translateY(-4px);border-color:var(--border-h)}
+.game-card.soon{opacity:.45;cursor:default}
+.gc-icon{font-size:28px;margin-bottom:10px;display:block}
+.gc-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text-main);margin-bottom:4px}
+.gc-desc{font-size:12px;color:var(--text-muted)}
+.gc-arrow{position:absolute;bottom:18px;right:20px;font-size:20px;color:var(--gold);opacity:0;transform:translateX(-6px);transition:all .2s}
+.game-card:not(.soon):hover .gc-arrow{opacity:1;transform:translateX(0)}
+.home-footer{font-size:11px;color:var(--text-muted);opacity:.45;letter-spacing:1px;text-transform:uppercase;margin-top:28px;position:relative;z-index:1}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:rgba(15,14,19,.97);position:sticky;top:0;z-index:50;gap:10px}
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--gold);padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.5px;transition:all .2s;white-space:nowrap}
+.back-btn:hover{background:rgba(201,168,76,.1);border-color:var(--border-h)}
+.topbar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold);letter-spacing:1px}
+.topbar-right{display:flex;gap:6px;flex-shrink:0}
+
+/* ── KING INNER ── */
+.king-inner{padding:14px 14px 100px;max-width:1100px;margin:0 auto}
+
+/* ── ROUND PILLS ── */
+.round-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.rpill{font-family:'DM Sans',sans-serif;font-size:11px;padding:4px 11px;border:1px solid var(--border);background:transparent;color:var(--text-muted);border-radius:20px;cursor:pointer;transition:all .2s}
+.rpill.active{background:var(--gold);color:#0f0e13;border-color:var(--gold);font-weight:500}
+.rpill.done{border-color:rgba(201,168,76,.4);color:rgba(201,168,76,.7)}
+.rpill:hover:not(.active){border-color:var(--gold);color:var(--gold)}
+
+/* ── TOTALS BAR ── */
+.totals-bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:14px}
+.tc{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.tc.r1{border-color:rgba(255,215,0,.4);background:rgba(255,215,0,.04)}
+.tc-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;font-family:'Playfair Display',serif;flex-shrink:0}
+.tc-info{flex:1;min-width:0}
+.tc-name-inp{font-size:13px;font-weight:500;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text-main);font-family:'DM Sans',sans-serif;width:100%;padding:1px 0;transition:border-color .2s}
+.tc-name-inp:focus{outline:none;border-bottom-color:var(--gold)}
+.tc-rank{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.tc-score{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);flex-shrink:0}
+
+/* ── SCORECARD ── */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:12px}
+#scorecard{width:100%;border-collapse:collapse;min-width:400px;background:var(--bg-card)}
+#scorecard th{padding:9px 10px;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg-surface)}
+#scorecard th:first-child{text-align:left;min-width:130px}
+#scorecard td{padding:7px 10px;font-size:14px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text-muted)}
+#scorecard td:first-child{text-align:left;font-size:13px;color:var(--text-main)}
+#scorecard tr:last-child td{border-bottom:none}
+.row-sh td{background:var(--bg-row);padding:5px 10px;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);border-top:1px solid var(--border)}
+.row-t1 td,.row-t2 td{background:rgba(0,0,0,.25);font-weight:500}
+.row-t1 td:first-child,.row-t2 td:first-child{color:var(--text-main)}
+.row-gt td{background:rgba(201,168,76,.08);font-weight:500;border-top:1px solid rgba(201,168,76,.3)}
+.row-gt td:first-child{color:var(--gold);font-family:'Playfair Display',serif;font-size:15px}
+.sc{background:transparent;border:1px solid rgba(201,168,76,.15);border-radius:6px;color:var(--text-main);font-size:14px;width:70px;text-align:center;padding:4px 6px;font-family:'DM Sans',sans-serif;transition:border-color .2s,background .2s;-moz-appearance:textfield}
+.sc::-webkit-outer-spin-button,.sc::-webkit-inner-spin-button{-webkit-appearance:none}
+.sc:focus{outline:none;border-color:var(--gold);background:rgba(201,168,76,.05)}
+.festa-label-inp{background:transparent;border:none;border-bottom:1px dashed rgba(201,168,76,.25);color:var(--text-main);font-size:13px;font-family:'DM Sans',sans-serif;padding:1px 2px;width:100%;max-width:130px;transition:border-color .2s}
+.festa-label-inp:focus{outline:none;border-bottom-color:var(--gold)}
+.pdot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.cmp{font-weight:500}
+.cn{color:var(--red)}.cp{color:var(--green)}.cz{color:var(--text-muted)}.cg{color:var(--gold);font-family:'Playfair Display',serif;font-size:16px}
+
+/* ── ACTIONS ── */
+.actions-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-p{background:var(--gold);color:#0f0e13;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.btn-p:hover{background:var(--gold-light)}
+.btn-s{background:transparent;border:1px solid var(--border);color:var(--gold);border-radius:10px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.btn-s:hover{background:rgba(201,168,76,.1);border-color:var(--border-h)}
+.btn-d{background:transparent;border:1px solid rgba(214,69,69,.3);color:var(--red);border-radius:10px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.btn-d:hover{background:rgba(214,69,69,.08)}
+.btn-sm{padding:5px 11px;font-size:11px;border-radius:7px}
+
+/* ── MODAL ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--bg-card);border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:22px;width:min(320px,92vw)}
+.modal-box h3{font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);margin-bottom:4px}
+.modal-box p{font-size:12px;color:var(--text-muted);margin-bottom:16px}
+.mf{margin-bottom:11px}
+.mf label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:5px}
+.mf input{width:100%;background:var(--bg-surface);border:1px solid rgba(201,168,76,.3);border-radius:7px;color:var(--text-main);font-size:14px;padding:8px 11px;font-family:'DM Sans',sans-serif}
+.mf input:focus{outline:none;border-color:var(--gold)}
+.cpicker{display:flex;gap:7px;flex-wrap:wrap}
+.cdot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.cdot.sel{border-color:#fff;transform:scale(1.15)}
+.mactions{display:flex;gap:7px;margin-top:16px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--bg-surface);border:1px solid rgba(201,168,76,.35);color:var(--text-main);padding:9px 18px;border-radius:10px;font-size:13px;z-index:300;transition:transform .3s;pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.cfetti{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden}
+</style>
 </head>
 <body>
 
-  <!-- HOME SCREEN -->
-  <div id="screen-home" class="screen active">
-    <div class="home-bg">
-      <div class="home-blob blob-1"></div>
-      <div class="home-blob blob-2"></div>
-      <div class="home-blob blob-3"></div>
+<!-- ══ HOME ══════════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="home-wrap">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="home-hero">
+      <div class="dice">🎲</div>
+      <h1 class="home-title">Game Night</h1>
+      <p class="home-sub">Quem vai vencer esta noite?</p>
     </div>
-    <div class="home-content">
-      <div class="home-hero">
-        <div class="home-dice">🎲</div>
-        <h1 class="home-title">Game Night</h1>
-        <p class="home-subtitle">Quem vai vencer esta noite?</p>
+    <div class="home-grid">
+      <button class="game-card" onclick="openKing()">
+        <span class="gc-icon">♛</span>
+        <div class="gc-name">King</div>
+        <div class="gc-desc">Cartas · Penalizações · Festas</div>
+        <div class="gc-arrow">→</div>
+      </button>
+      <div class="game-card soon">
+        <span class="gc-icon">🃏</span>
+        <div class="gc-name">Sueca</div>
+        <div class="gc-desc">Em breve</div>
       </div>
-      <div class="home-grid">
-        <button class="game-card" onclick="openModule('king')">
-          <div class="game-card-icon">♛</div>
-          <div class="game-card-name">King</div>
-          <div class="game-card-desc">Cartas · Penalizações · Festas</div>
-          <div class="game-card-arrow">→</div>
-        </button>
-        <div class="game-card game-card--soon">
-          <div class="game-card-icon">🃏</div>
-          <div class="game-card-name">Sueca</div>
-          <div class="game-card-desc">Em breve</div>
-        </div>
-        <div class="game-card game-card--soon">
-          <div class="game-card-icon">🀄</div>
-          <div class="game-card-name">Buraco</div>
-          <div class="game-card-desc">Em breve</div>
-        </div>
-        <div class="game-card game-card--soon">
-          <div class="game-card-icon">🎴</div>
-          <div class="game-card-name">Scopone</div>
-          <div class="game-card-desc">Em breve</div>
-        </div>
+      <div class="game-card soon">
+        <span class="gc-icon">🀄</span>
+        <div class="gc-name">Buraco</div>
+        <div class="gc-desc">Em breve</div>
       </div>
-      <p class="home-footer">Seleciona um jogo para começar</p>
-    </div>
-  </div>
-
-  <!-- KING SCREEN -->
-  <div id="screen-king" class="screen">
-    <header class="topbar">
-      <button class="back-btn" onclick="goHome()">← Jogos</button>
-      <div class="topbar-brand">
-        <span class="topbar-title">♛ King</span>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn-secondary btn-sm" id="btn-add-player">+ Jogador</button>
-        <button class="btn-danger btn-sm" id="btn-reset">↺ Reset</button>
-      </div>
-    </header>
-    <main class="module-main">
-      <div class="round-pills" id="round-pills"></div>
-      <div class="totals-bar" id="totals-bar"></div>
-      <div class="table-wrap">
-        <table id="scorecard"></table>
-      </div>
-      <div class="actions-row">
-        <button class="btn-primary" id="btn-save-round">✓ Guardar Ronda</button>
-        <button class="btn-secondary" id="btn-add-festa">+ Festa</button>
-        <button class="btn-danger" id="btn-remove-festa" style="display:none">− Festa</button>
-      </div>
-    </main>
-  </div>
-
-  <!-- ADD PLAYER MODAL -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal-box">
-      <h3>Novo Jogador</h3>
-      <p>Adiciona um jogador à partida</p>
-      <div class="mfield">
-        <label for="pname-inp">Nome</label>
-        <input type="text" id="pname-inp" placeholder="Ex: João" maxlength="14" />
-      </div>
-      <div class="mfield">
-        <label>Cor</label>
-        <div class="cpicker" id="cpicker"></div>
-      </div>
-      <div class="mactions">
-        <button class="btn-primary" id="btn-confirm-player">Adicionar</button>
-        <button class="btn-secondary" id="btn-cancel-player">Cancelar</button>
+      <div class="game-card soon">
+        <span class="gc-icon">🎴</span>
+        <div class="gc-name">Scopone</div>
+        <div class="gc-desc">Em breve</div>
       </div>
     </div>
+    <p class="home-footer">Seleciona um jogo para começar</p>
   </div>
+</div>
 
-  <div class="toast" id="toast"></div>
-  <div class="confetti-container" id="confetti-container"></div>
+<!-- ══ KING ══════════════════════════════════════ -->
+<div id="screen-king" class="screen">
+  <header class="topbar">
+    <button class="back-btn" onclick="goHome()">← Jogos</button>
+    <div class="topbar-title">♛ King</div>
+    <div class="topbar-right">
+      <button class="btn-s btn-sm" onclick="openAddPlayer()">+ Jogador</button>
+      <button class="btn-d btn-sm" onclick="doReset()">↺ Reset</button>
+    </div>
+  </header>
+  <div class="king-inner">
+    <div class="round-pills" id="round-pills"></div>
+    <div class="totals-bar" id="totals-bar"></div>
+    <div class="table-wrap"><table id="scorecard"></table></div>
+    <div class="actions-row">
+      <button class="btn-p" onclick="saveRound()">✓ Guardar Ronda</button>
+      <button class="btn-s" onclick="doAddFesta()">+ Festa</button>
+      <button class="btn-d" id="btn-rm-festa" style="display:none" onclick="doRemoveFesta()">− Festa</button>
+    </div>
+  </div>
+</div>
 
-  <script src="js/state.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="modules/king.js"></script>
-  <script src="js/app.js"></script>
+<!-- ══ MODAL ══════════════════════════════════════ -->
+<div class="modal-ov" id="modal-ov" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <h3>Novo Jogador</h3>
+    <p>Adiciona um jogador à partida</p>
+    <div class="mf"><label>Nome</label><input type="text" id="pname" placeholder="Ex: João" maxlength="14" onkeydown="if(event.key==='Enter')confirmPlayer()"/></div>
+    <div class="mf"><label>Cor</label><div class="cpicker" id="cpicker"></div></div>
+    <div class="mactions">
+      <button class="btn-p" onclick="confirmPlayer()">Adicionar</button>
+      <button class="btn-s" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="cfetti" id="cfetti"></div>
+
+<script>
+// ═══════════════ DATA ═══════════════
+const PALETTE = ['#c9a84c','#d64545','#4caf7a','#5b8dd9','#a066d3','#e07b3a','#4db3b3','#d45b8a'];
+const NUM_ROUNDS = 8;
+const PEN_ROWS = [
+  {key:'no_vazar', label:'🚫 Sem vazar'},
+  {key:'copas',    label:'♥ Copas'},
+  {key:'damas',    label:'👸 Damas'},
+  {key:'homens',   label:'🕺 Homens'},
+  {key:'porco',    label:'🐷 Porco'},
+  {key:'dobro',    label:'2✖ Dobro'},
+];
+
+const DEFAULT = () => ({
+  players:[
+    {id:1,name:'Jogador 1',color:'#c9a84c'},
+    {id:2,name:'Jogador 2',color:'#d64545'},
+    {id:3,name:'Jogador 3',color:'#4caf7a'},
+    {id:4,name:'Jogador 4',color:'#5b8dd9'},
+  ],
+  cur:1, nid:5, rounds:{}
+});
+
+let S = DEFAULT();
+
+function save(){ try{localStorage.setItem('gn-king',JSON.stringify(S));}catch(e){} }
+function load(){
+  try{const d=localStorage.getItem('gn-king');if(d)S=JSON.parse(d);}catch(e){S=DEFAULT();}
+}
+
+function initRound(r){
+  if(!S.rounds[r]){
+    const pen={};
+    PEN_ROWS.forEach(pr=>{pen[pr.key]={};S.players.forEach(p=>{pen[pr.key][p.id]=0;});});
+    const festas=[];
+    for(let i=0;i<4;i++){const v={};S.players.forEach(p=>{v[p.id]=0;});festas.push({label:'Festa '+(i+1),v});}
+    S.rounds[r]={pen,festas};
+  } else {
+    const rd=S.rounds[r];
+    S.players.forEach(p=>{
+      PEN_ROWS.forEach(pr=>{if(!rd.pen[pr.key])rd.pen[pr.key]={};if(rd.pen[pr.key][p.id]===undefined)rd.pen[pr.key][p.id]=0;});
+      rd.festas.forEach(f=>{if(!f.v)f.v={};if(f.v[p.id]===undefined)f.v[p.id]=0;});
+    });
+  }
+}
+
+// ═══════════════ CALCULATIONS ═══════════════
+function t1(r){
+  const rd=S.rounds[r];if(!rd)return{};
+  const t={};S.players.forEach(p=>{t[p.id]=0;});
+  PEN_ROWS.forEach(pr=>{S.players.forEach(p=>{t[p.id]-=(rd.pen[pr.key]&&rd.pen[pr.key][p.id])||0;});});
+  return t;
+}
+function t2(r){
+  const rd=S.rounds[r];if(!rd)return{};
+  const t={};S.players.forEach(p=>{t[p.id]=0;});
+  rd.festas.forEach(f=>{S.players.forEach(p=>{t[p.id]+=(f.v[p.id]||0);});});
+  return t;
+}
+function gt(r){
+  const a=t1(r),b=t2(r),g={};
+  S.players.forEach(p=>{g[p.id]=(a[p.id]||0)+(b[p.id]||0);});
+  return g;
+}
+function allTotals(){
+  const t={};S.players.forEach(p=>{t[p.id]=0;});
+  for(let r=1;r<=NUM_ROUNDS;r++){if(S.rounds[r]){const g=gt(r);S.players.forEach(p=>{t[p.id]+=g[p.id]||0;});}}
+  return t;
+}
+function rankings(){
+  const all=allTotals();
+  return [...S.players].sort((a,b)=>all[b.id]-all[a.id]).map((p,i)=>({...p,total:all[p.id],rank:i+1}));
+}
+
+// ═══════════════ FORMAT ═══════════════
+function fmt(v){if(!v)return'0';return v>0?'+'+v:String(v);}
+function sc(v,pig){if(v===0)return'cz';if(pig)return v>0?'cp':'cn';return v<0?'cp':'cn';}
+function ini(n){return n.slice(0,2).toUpperCase();}
+
+// ═══════════════ RENDER ═══════════════
+function renderPills(){
+  const c=document.getElementById('round-pills');c.innerHTML='';
+  for(let r=1;r<=NUM_ROUNDS;r++){
+    const b=document.createElement('button');
+    b.className='rpill'+(r===S.cur?' active':S.rounds[r]?' done':'');
+    b.textContent='Ronda '+r;
+    b.onclick=()=>{S.cur=r;renderKing();};
+    c.appendChild(b);
+  }
+}
+
+function renderTotals(){
+  const c=document.getElementById('totals-bar');c.innerHTML='';
+  const rnk=rankings();
+  const medals=['♛','♜','♝'];
+  rnk.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='tc'+(i===0?' r1':'');
+    d.innerHTML=`
+      <div class="tc-avatar" style="background:${p.color}22;color:${p.color}">${ini(p.name)}</div>
+      <div class="tc-info">
+        <input class="tc-name-inp" type="text" value="${p.name}" maxlength="14" data-pid="${p.id}"/>
+        <div class="tc-rank">${i<3?medals[i]+' ':''}${i+1}º lugar</div>
+      </div>
+      <div class="tc-score">${p.total}</div>`;
+    const inp=d.querySelector('.tc-name-inp');
+    inp.addEventListener('blur',()=>{
+      const n=inp.value.trim();
+      if(n&&n!==p.name){
+        const pl=S.players.find(x=>x.id===p.id);
+        if(pl){pl.name=n;save();renderKing();toast('Nome atualizado!');}
+      }
+    });
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
+    c.appendChild(d);
+  });
+}
+
+function renderTable(){
+  const tbl=document.getElementById('scorecard');
+  initRound(S.cur);
+  const rd=S.rounds[S.cur];
+  const R1=t1(S.cur),R2=t2(S.cur),GT=gt(S.cur);
+  const np=S.players.length;
+
+  let h='<thead><tr><th>Categoria</th>';
+  S.players.forEach(p=>{h+=`<th><span class="pdot" style="background:${p.color}"></span>${p.name}</th>`;});
+  h+='</tr></thead><tbody>';
+
+  // Penalizações
+  h+=`<tr class="row-sh"><td colspan="${1+np}">Penalizações (pontos negativos)</td></tr>`;
+  PEN_ROWS.forEach(pr=>{
+    h+=`<tr><td>${pr.label}</td>`;
+    S.players.forEach(p=>{
+      const v=rd.pen[pr.key]?rd.pen[pr.key][p.id]||0:0;
+      h+=`<td><input class="sc" type="number" value="${v}" data-t="pen" data-k="${pr.key}" data-pid="${p.id}"/></td>`;
+    });
+    h+='</tr>';
+  });
+
+  // Total 1
+  h+=`<tr class="row-t1"><td>Total 1 (pontos negativos)</td>`;
+  S.players.forEach(p=>{h+=`<td class="cmp ${sc(R1[p.id],false)}" data-t1="${p.id}">${fmt(R1[p.id])}</td>`;});
+  h+='</tr>';
+
+  // Festas
+  h+=`<tr class="row-sh"><td colspan="${1+np}">Festas (pontos positivos)</td></tr>`;
+  rd.festas.forEach((f,i)=>{
+    h+=`<tr><td><input class="festa-label-inp" type="text" value="${f.label}" data-fi="${i}"/></td>`;
+    S.players.forEach(p=>{
+      const v=f.v[p.id]||0;
+      h+=`<td><input class="sc" type="number" value="${v}" data-t="festa" data-fi="${i}" data-pid="${p.id}"/></td>`;
+    });
+    h+='</tr>';
+  });
+
+  // Total 2
+  h+=`<tr class="row-t2"><td>Total 2 (pontos positivos)</td>`;
+  S.players.forEach(p=>{h+=`<td class="cmp ${sc(R2[p.id],true)}" data-t2="${p.id}">${fmt(R2[p.id])}</td>`;});
+  h+='</tr>';
+
+  // Grand total
+  h+=`<tr class="row-gt"><td>♛ Soma Total</td>`;
+  S.players.forEach(p=>{h+=`<td class="cmp cg" data-gt="${p.id}">${fmt(GT[p.id])}</td>`;});
+  h+='</tr></tbody>';
+
+  tbl.innerHTML=h;
+
+  // Score inputs
+  tbl.querySelectorAll('.sc').forEach(el=>{
+    el.addEventListener('input',()=>{
+      const pid=parseInt(el.dataset.pid),v=parseInt(el.value)||0;
+      initRound(S.cur);
+      if(el.dataset.t==='pen'){
+        S.rounds[S.cur].pen[el.dataset.k][pid]=v;
+      } else {
+        S.rounds[S.cur].festas[parseInt(el.dataset.fi)].v[pid]=v;
+      }
+      save();updateTotals();
+    });
+  });
+
+  // Festa label inputs
+  tbl.querySelectorAll('.festa-label-inp').forEach(el=>{
+    el.addEventListener('blur',()=>{
+      const fi=parseInt(el.dataset.fi),lbl=el.value.trim();
+      if(lbl){S.rounds[S.cur].festas[fi].label=lbl;save();}
+    });
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});
+  });
+
+  document.getElementById('btn-rm-festa').style.display=rd.festas.length>1?'':'none';
+}
+
+function updateTotals(){
+  const R1=t1(S.cur),R2=t2(S.cur),GT=gt(S.cur);
+  S.players.forEach(p=>{
+    const c1=document.querySelector(`[data-t1="${p.id}"]`);
+    const c2=document.querySelector(`[data-t2="${p.id}"]`);
+    const cg=document.querySelector(`[data-gt="${p.id}"]`);
+    if(c1){c1.textContent=fmt(R1[p.id]);c1.className=`cmp ${sc(R1[p.id],false)}`;}
+    if(c2){c2.textContent=fmt(R2[p.id]);c2.className=`cmp ${sc(R2[p.id],true)}`;}
+    if(cg){cg.textContent=fmt(GT[p.id]);cg.className='cmp cg';}
+  });
+  renderTotals();
+}
+
+function renderKing(){renderPills();renderTotals();renderTable();}
+
+// ═══════════════ ACTIONS ═══════════════
+function openKing(){
+  document.getElementById('screen-home').classList.remove('active');
+  document.getElementById('screen-king').classList.add('active');
+  renderKing();
+}
+function goHome(){
+  document.getElementById('screen-king').classList.remove('active');
+  document.getElementById('screen-home').classList.add('active');
+}
+function saveRound(){
+  initRound(S.cur);save();renderKing();toast('Ronda '+S.cur+' guardada!');
+  if(Object.keys(S.rounds).length>=NUM_ROUNDS){
+    const w=rankings()[0];
+    setTimeout(()=>{toast('♛ '+w.name+' lidera com '+w.total+' pts!');confetti();},400);
+  }
+}
+function doReset(){
+  if(confirm('Reiniciar toda a partida?')){S=DEFAULT();save();renderKing();toast('Partida reiniciada');}
+}
+function doAddFesta(){initRound(S.cur);const n=S.rounds[S.cur].festas.length+1;const v={};S.players.forEach(p=>{v[p.id]=0;});S.rounds[S.cur].festas.push({label:'Festa '+n,v});save();renderTable();toast('Festa adicionada');}
+function doRemoveFesta(){
+  if(S.rounds[S.cur]&&S.rounds[S.cur].festas.length>1){S.rounds[S.cur].festas.pop();save();renderTable();toast('Festa removida');}
+}
+
+// ═══════════════ ADD PLAYER ═══════════════
+let selColor=PALETTE[0];
+function openAddPlayer(){
+  selColor=PALETTE[S.players.length%PALETTE.length];
+  renderCpicker();
+  document.getElementById('pname').value='';
+  document.getElementById('modal-ov').classList.add('open');
+  setTimeout(()=>document.getElementById('pname').focus(),80);
+}
+function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
+function renderCpicker(){
+  const c=document.getElementById('cpicker');c.innerHTML='';
+  PALETTE.forEach(col=>{
+    const d=document.createElement('div');
+    d.className='cdot'+(col===selColor?' sel':'');
+    d.style.background=col;
+    d.onclick=()=>{selColor=col;renderCpicker();};
+    c.appendChild(d);
+  });
+}
+function confirmPlayer(){
+  const name=document.getElementById('pname').value.trim();
+  if(!name){toast('Insere um nome');return;}
+  if(S.players.find(p=>p.name.toLowerCase()===name.toLowerCase())){toast('Nome já existe');return;}
+  const id=S.nid++;
+  S.players.push({id,name,color:selColor});
+  Object.keys(S.rounds).forEach(r=>{
+    const rd=S.rounds[r];
+    PEN_ROWS.forEach(pr=>{if(rd.pen[pr.key])rd.pen[pr.key][id]=0;});
+    rd.festas.forEach(f=>{f.v[id]=0;});
+  });
+  save();closeModal();renderKing();toast(name+' adicionado!');
+}
+
+// ═══════════════ TOAST & CONFETTI ═══════════════
+let tt;
+function toast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2500);
+}
+function confetti(){
+  const c=document.getElementById('cfetti');c.innerHTML='';
+  const cols=['#c9a84c','#f0d080','#fff','#d64545','#4caf7a','#5b8dd9'];
+  const st=document.createElement('style');
+  st.textContent='@keyframes cf{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(700px) rotate(720deg)}}';
+  document.head.appendChild(st);
+  for(let i=0;i<70;i++){
+    const p=document.createElement('div');const sz=6+Math.random()*6;
+    p.style.cssText=`position:absolute;left:${Math.random()*100}%;top:-10px;width:${sz}px;height:${sz}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?'50%':'2px'};animation:cf ${1.2+Math.random()*1.8}s ${Math.random()*.6}s forwards`;
+    c.appendChild(p);
+  }
+  setTimeout(()=>c.innerHTML='',4000);
+}
+
+// ═══════════════ INIT ═══════════════
+load();
+</script>
 </body>
 </html>
