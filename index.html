@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Game Night 🎲</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -16,53 +17,96 @@
 }
 html,body{height:100%}
 body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text-main);font-size:14px}
-
-/* ── SCREENS ── */
 .screen{display:none;min-height:100vh}
 .screen.active{display:block}
 
-/* ── HOME ── */
-.home-wrap{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 60px;overflow:hidden}
-.blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.18;pointer-events:none}
+/* BLOBS */
+.blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.15;pointer-events:none;z-index:0}
 .b1{width:500px;height:500px;background:#c9a84c;top:-100px;right:-100px;animation:drift 12s ease-in-out infinite alternate}
 .b2{width:400px;height:400px;background:#5b8dd9;bottom:-80px;left:-80px;animation:drift 16s ease-in-out infinite alternate-reverse}
 .b3{width:300px;height:300px;background:#4caf7a;top:40%;left:40%;animation:drift 10s ease-in-out infinite alternate}
 @keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(30px,20px) scale(1.08)}}
-.home-hero{text-align:center;margin-bottom:48px;position:relative;z-index:1}
-.dice{font-size:56px;display:inline-block;animation:bounce 2.4s ease-in-out infinite;margin-bottom:14px}
+
+/* LOADING */
+.loading-screen{position:fixed;inset:0;background:var(--bg-deep);display:flex;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:16px}
+.loading-screen.hidden{display:none}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-screen p{font-size:13px;color:var(--text-muted)}
+
+/* AUTH */
+.auth-wrap{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{position:relative;z-index:1;background:rgba(26,24,37,.92);border:1px solid var(--border);border-radius:20px;padding:36px 32px;width:min(400px,100%);backdrop-filter:blur(12px)}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-dice{font-size:44px;display:inline-block;animation:bounce 2.4s ease-in-out infinite}
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.auth-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--gold);letter-spacing:1px;margin-top:8px}
+.auth-sub{font-size:13px;color:var(--text-muted);margin-top:4px}
+.auth-tabs{display:flex;gap:4px;background:var(--bg-surface);border-radius:10px;padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;padding:8px;border:none;background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;border-radius:7px;cursor:pointer;transition:all .2s}
+.auth-tab.active{background:var(--gold);color:#0f0e13;font-weight:500}
+.auth-form{display:flex;flex-direction:column;gap:14px}
+.af-field label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);display:block;margin-bottom:5px}
+.af-field input{width:100%;background:var(--bg-row);border:1px solid var(--border);border-radius:8px;color:var(--text-main);font-size:14px;padding:10px 12px;font-family:'DM Sans',sans-serif;transition:border-color .2s}
+.af-field input:focus{outline:none;border-color:var(--gold)}
+.auth-btn{background:var(--gold);color:#0f0e13;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;margin-top:4px}
+.auth-btn:hover{background:var(--gold-light)}
+.auth-err{font-size:12px;color:var(--red);text-align:center;min-height:18px}
+
+/* STARS */
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d) ease-in-out infinite alternate}
+@keyframes twinkle{0%{opacity:.1;transform:scale(1)}100%{opacity:.7;transform:scale(1.4)}}
+
+/* HOME */
+.home-wrap{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 60px;overflow:hidden}
+.home-hero{text-align:center;margin-bottom:44px;position:relative;z-index:1}
+.dice{font-size:56px;display:inline-block;animation:bounce 2.4s ease-in-out infinite;margin-bottom:14px}
 .home-title{font-family:'Playfair Display',serif;font-size:clamp(40px,10vw,64px);font-weight:900;color:var(--gold);letter-spacing:2px;line-height:1;margin-bottom:10px}
 .home-sub{font-size:15px;color:var(--text-muted);font-style:italic}
+.home-user{font-size:12px;color:var(--text-muted);margin-top:8px}
+.home-user span{color:var(--gold);font-weight:500}
 .home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;width:100%;max-width:600px;position:relative;z-index:1}
-.game-card{background:rgba(26,24,37,.85);border:1px solid var(--border);border-radius:16px;padding:22px 20px;text-align:left;position:relative;overflow:hidden;backdrop-filter:blur(8px);transition:transform .2s,border-color .2s;font-family:'DM Sans',sans-serif;cursor:pointer}
-.game-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.06) 0%,transparent 60%);pointer-events:none}
-.game-card:not(.soon):hover{transform:translateY(-4px);border-color:var(--border-h)}
-.game-card.soon{opacity:.45;cursor:default}
-.gc-icon{font-size:28px;margin-bottom:10px;display:block}
+.game-card{background:rgba(26,24,37,.85);border:1px solid var(--border);border-radius:16px;padding:22px 20px;text-align:left;position:relative;overflow:hidden;backdrop-filter:blur(8px);transition:transform .2s,border-color .2s,box-shadow .2s;font-family:'DM Sans',sans-serif;cursor:pointer}
+.game-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.07) 0%,transparent 60%);pointer-events:none}
+.game-card:not(.soon):hover{transform:translateY(-5px);border-color:var(--border-h);box-shadow:0 8px 32px rgba(201,168,76,.12)}
+.game-card.soon{opacity:.4;cursor:default}
+.gc-icon{font-size:30px;margin-bottom:10px;display:block}
 .gc-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text-main);margin-bottom:4px}
 .gc-desc{font-size:12px;color:var(--text-muted)}
+.gc-badge{position:absolute;top:14px;right:14px;font-size:10px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);padding:2px 8px;border-radius:20px;letter-spacing:.5px}
 .gc-arrow{position:absolute;bottom:18px;right:20px;font-size:20px;color:var(--gold);opacity:0;transform:translateX(-6px);transition:all .2s}
 .game-card:not(.soon):hover .gc-arrow{opacity:1;transform:translateX(0)}
-.home-footer{font-size:11px;color:var(--text-muted);opacity:.45;letter-spacing:1px;text-transform:uppercase;margin-top:28px;position:relative;z-index:1}
 
-/* ── TOPBAR ── */
+/* GAME HISTORY */
+.home-history{width:100%;max-width:600px;position:relative;z-index:1;margin-top:24px}
+.hh-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);margin-bottom:10px}
+.hh-list{display:flex;flex-direction:column;gap:7px}
+.hh-item{background:rgba(26,24,37,.7);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;backdrop-filter:blur(6px)}
+.hh-name{font-size:13px;font-weight:500;margin-bottom:2px}
+.hh-date{font-size:11px;color:var(--text-muted)}
+.hh-btn{font-size:11px;color:var(--gold);border:1px solid var(--border);background:transparent;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.hh-btn:hover{background:rgba(201,168,76,.1);border-color:var(--border-h)}
+
+.home-footer-row{display:flex;align-items:center;gap:12px;margin-top:28px;position:relative;z-index:1}
+.home-footer{font-size:11px;color:var(--text-muted);opacity:.45;letter-spacing:1px;text-transform:uppercase}
+.logout-btn{font-size:11px;color:var(--text-muted);background:transparent;border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.logout-btn:hover{color:var(--red);border-color:rgba(214,69,69,.3)}
+
+/* TOPBAR */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:rgba(15,14,19,.97);position:sticky;top:0;z-index:50;gap:10px}
-.back-btn{background:transparent;border:1px solid var(--border);color:var(--gold);padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.5px;transition:all .2s;white-space:nowrap}
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--gold);padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap}
 .back-btn:hover{background:rgba(201,168,76,.1);border-color:var(--border-h)}
 .topbar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold);letter-spacing:1px}
 .topbar-right{display:flex;gap:6px;flex-shrink:0}
 
-/* ── KING INNER ── */
+/* KING */
 .king-inner{padding:14px 14px 100px;max-width:1100px;margin:0 auto}
-
-/* ── ROUND PILLS ── */
 .round-pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
 .rpill{font-family:'DM Sans',sans-serif;font-size:11px;padding:4px 11px;border:1px solid var(--border);background:transparent;color:var(--text-muted);border-radius:20px;cursor:pointer;transition:all .2s}
 .rpill.active{background:var(--gold);color:#0f0e13;border-color:var(--gold);font-weight:500}
 .rpill.done{border-color:rgba(201,168,76,.4);color:rgba(201,168,76,.7)}
 .rpill:hover:not(.active){border-color:var(--gold);color:var(--gold)}
-
-/* ── TOTALS BAR ── */
 .totals-bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:14px}
 .tc{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px}
 .tc.r1{border-color:rgba(255,215,0,.4);background:rgba(255,215,0,.04)}
@@ -72,8 +116,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text
 .tc-name-inp:focus{outline:none;border-bottom-color:var(--gold)}
 .tc-rank{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 .tc-score{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);flex-shrink:0}
-
-/* ── SCORECARD ── */
 .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:12px}
 #scorecard{width:100%;border-collapse:collapse;min-width:400px;background:var(--bg-card)}
 #scorecard th{padding:9px 10px;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg-surface)}
@@ -94,8 +136,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text
 .pdot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
 .cmp{font-weight:500}
 .cn{color:var(--red)}.cp{color:var(--green)}.cz{color:var(--text-muted)}.cg{color:var(--gold);font-family:'Playfair Display',serif;font-size:16px}
-
-/* ── ACTIONS ── */
 .actions-row{display:flex;gap:8px;flex-wrap:wrap}
 .btn-p{background:var(--gold);color:#0f0e13;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
 .btn-p:hover{background:var(--gold-light)}
@@ -105,7 +145,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text
 .btn-d:hover{background:rgba(214,69,69,.08)}
 .btn-sm{padding:5px 11px;font-size:11px;border-radius:7px}
 
-/* ── MODAL ── */
+/* MODAL */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center}
 .modal-ov.open{display:flex}
 .modal-box{background:var(--bg-card);border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:22px;width:min(320px,92vw)}
@@ -120,7 +160,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text
 .cdot.sel{border-color:#fff;transform:scale(1.15)}
 .mactions{display:flex;gap:7px;margin-top:16px}
 
-/* ── TOAST ── */
+/* TOAST */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--bg-surface);border:1px solid rgba(201,168,76,.35);color:var(--text-main);padding:9px 18px;border-radius:10px;font-size:13px;z-index:300;transition:transform .3s;pointer-events:none;white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .cfetti{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden}
@@ -128,45 +168,76 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text
 </head>
 <body>
 
-<!-- ══ HOME ══════════════════════════════════════ -->
-<div id="screen-home" class="screen active">
+<div class="loading-screen" id="loading"><div class="spinner"></div><p>A carregar...</p></div>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+<!-- AUTH -->
+<div id="screen-auth" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-dice">🎲</div>
+        <div class="auth-title">Game Night</div>
+        <div class="auth-sub">A tua noite de jogos começa aqui</div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
+        <button class="auth-tab" onclick="switchTab('register')">Registar</button>
+      </div>
+      <div class="auth-form">
+        <div class="af-field" id="field-username" style="display:none">
+          <label>Nome de utilizador</label>
+          <input type="text" id="auth-username" placeholder="Ex: joao_silva" maxlength="20"/>
+        </div>
+        <div class="af-field">
+          <label>Email</label>
+          <input type="email" id="auth-email" placeholder="o-teu@email.com"/>
+        </div>
+        <div class="af-field">
+          <label>Password</label>
+          <input type="password" id="auth-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()"/>
+        </div>
+        <div class="auth-err" id="auth-err"></div>
+        <button class="auth-btn" id="auth-btn" onclick="doAuth()">Entrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="screen-home" class="screen">
+  <div class="stars" id="stars"></div>
   <div class="home-wrap">
-    <div class="blob b1"></div>
-    <div class="blob b2"></div>
-    <div class="blob b3"></div>
     <div class="home-hero">
       <div class="dice">🎲</div>
       <h1 class="home-title">Game Night</h1>
       <p class="home-sub">Quem vai vencer esta noite?</p>
+      <p class="home-user">Olá, <span id="home-username">jogador</span> 👋</p>
     </div>
     <div class="home-grid">
-      <button class="game-card" onclick="openKing()">
+      <button class="game-card" onclick="startNewKing()">
         <span class="gc-icon">♛</span>
         <div class="gc-name">King</div>
         <div class="gc-desc">Cartas · Penalizações · Festas</div>
+        <div class="gc-badge">ativo</div>
         <div class="gc-arrow">→</div>
       </button>
-      <div class="game-card soon">
-        <span class="gc-icon">🃏</span>
-        <div class="gc-name">Sueca</div>
-        <div class="gc-desc">Em breve</div>
-      </div>
-      <div class="game-card soon">
-        <span class="gc-icon">🀄</span>
-        <div class="gc-name">Buraco</div>
-        <div class="gc-desc">Em breve</div>
-      </div>
-      <div class="game-card soon">
-        <span class="gc-icon">🎴</span>
-        <div class="gc-name">Scopone</div>
-        <div class="gc-desc">Em breve</div>
-      </div>
+      <div class="game-card soon"><span class="gc-icon">🃏</span><div class="gc-name">Sueca</div><div class="gc-desc">Em breve</div></div>
+      <div class="game-card soon"><span class="gc-icon">🀄</span><div class="gc-name">Buraco</div><div class="gc-desc">Em breve</div></div>
+      <div class="game-card soon"><span class="gc-icon">🎴</span><div class="gc-name">Scopone</div><div class="gc-desc">Em breve</div></div>
     </div>
-    <p class="home-footer">Seleciona um jogo para começar</p>
+    <div class="home-history" id="home-history" style="display:none">
+      <div class="hh-title">Partidas guardadas</div>
+      <div class="hh-list" id="hh-list"></div>
+    </div>
+    <div class="home-footer-row">
+      <p class="home-footer">Seleciona um jogo para começar</p>
+      <button class="logout-btn" onclick="doLogout()">Sair →</button>
+    </div>
   </div>
 </div>
 
-<!-- ══ KING ══════════════════════════════════════ -->
+<!-- KING -->
 <div id="screen-king" class="screen">
   <header class="topbar">
     <button class="back-btn" onclick="goHome()">← Jogos</button>
@@ -188,11 +259,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text
   </div>
 </div>
 
-<!-- ══ MODAL ══════════════════════════════════════ -->
+<!-- MODAL -->
 <div class="modal-ov" id="modal-ov" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
-    <h3>Novo Jogador</h3>
-    <p>Adiciona um jogador à partida</p>
+    <h3>Novo Jogador</h3><p>Adiciona um jogador à partida</p>
     <div class="mf"><label>Nome</label><input type="text" id="pname" placeholder="Ex: João" maxlength="14" onkeydown="if(event.key==='Enter')confirmPlayer()"/></div>
     <div class="mf"><label>Cor</label><div class="cpicker" id="cpicker"></div></div>
     <div class="mactions">
@@ -206,35 +276,198 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-deep);color:var(--text
 <div class="cfetti" id="cfetti"></div>
 
 <script>
-// ═══════════════ DATA ═══════════════
-const PALETTE = ['#c9a84c','#d64545','#4caf7a','#5b8dd9','#a066d3','#e07b3a','#4db3b3','#d45b8a'];
-const NUM_ROUNDS = 8;
-const PEN_ROWS = [
-  {key:'no_vazar', label:'🚫 Sem vazar'},
-  {key:'copas',    label:'♥ Copas'},
-  {key:'damas',    label:'👸 Damas'},
-  {key:'homens',   label:'🕺 Homens'},
-  {key:'porco',    label:'🐷 Porco'},
-  {key:'dobro',    label:'2✖ Dobro'},
+const SURL = 'https://uywbaygsrjmlypukclnw.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5d2JheWdzcmptbHlwdWtjbG53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MzgzODAsImV4cCI6MjA5MTMxNDM4MH0.LUHLOh-WdlZCNRE_HgBJLPX1Q-UQdLkYtNP03ViUemM';
+const sb = supabase.createClient(SURL, SKEY);
+
+const PALETTE=['#c9a84c','#d64545','#4caf7a','#5b8dd9','#a066d3','#e07b3a','#4db3b3','#d45b8a'];
+const NUM_ROUNDS=8;
+const PEN_ROWS=[
+  {key:'no_vazar',label:'🚫 Sem vazar'},
+  {key:'copas',label:'♥ Copas'},
+  {key:'damas',label:'👸 Damas'},
+  {key:'homens',label:'🕺 Homens'},
+  {key:'porco',label:'🐷 Porco'},
+  {key:'dobro',label:'2✖ Dobro'},
 ];
 
-const DEFAULT = () => ({
-  players:[
-    {id:1,name:'Jogador 1',color:'#c9a84c'},
-    {id:2,name:'Jogador 2',color:'#d64545'},
-    {id:3,name:'Jogador 3',color:'#4caf7a'},
-    {id:4,name:'Jogador 4',color:'#5b8dd9'},
-  ],
-  cur:1, nid:5, rounds:{}
-});
+let currentUser=null, currentGameId=null;
+let S=defaultS();
 
-let S = DEFAULT();
-
-function save(){ try{localStorage.setItem('gn-king',JSON.stringify(S));}catch(e){} }
-function load(){
-  try{const d=localStorage.getItem('gn-king');if(d)S=JSON.parse(d);}catch(e){S=DEFAULT();}
+function defaultS(){
+  return {
+    players:[
+      {id:1,name:'Jogador 1',color:'#c9a84c'},
+      {id:2,name:'Jogador 2',color:'#d64545'},
+      {id:3,name:'Jogador 3',color:'#4caf7a'},
+      {id:4,name:'Jogador 4',color:'#5b8dd9'},
+    ],
+    cur:1,nid:5,rounds:{}
+  };
 }
 
+// ── AUTH ──
+let authMode='login';
+function switchTab(m){
+  authMode=m;
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&m==='login')||(i===1&&m==='register')));
+  document.getElementById('field-username').style.display=m==='register'?'':'none';
+  document.getElementById('auth-btn').textContent=m==='login'?'Entrar':'Criar conta';
+  document.getElementById('auth-err').textContent='';
+}
+
+async function doAuth(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const errEl=document.getElementById('auth-err');
+  errEl.textContent='';
+  if(!email||!pass){errEl.textContent='Preenche todos os campos.';return;}
+  showLoading();
+  if(authMode==='register'){
+    const username=document.getElementById('auth-username').value.trim();
+    if(!username){hideLoading();errEl.textContent='Escolhe um nome de utilizador.';return;}
+    const {data,error}=await sb.auth.signUp({email,password:pass});
+    if(error){hideLoading();errEl.textContent=transErr(error.message);return;}
+    await sb.from('profiles').insert({id:data.user.id,username});
+  } else {
+    const {error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error){hideLoading();errEl.textContent=transErr(error.message);return;}
+  }
+}
+
+function transErr(m){
+  if(m.includes('Invalid login'))return 'Email ou password incorretos.';
+  if(m.includes('already registered'))return 'Este email já está registado.';
+  if(m.includes('Password should'))return 'A password deve ter pelo menos 6 caracteres.';
+  return m;
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null;currentGameId=null;
+  showScreen('auth');
+}
+
+// ── SCREENS ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+function showLoading(){document.getElementById('loading').classList.remove('hidden');}
+function hideLoading(){document.getElementById('loading').classList.add('hidden');}
+
+// ── HOME ──
+function generateStars(){
+  const c=document.getElementById('stars');
+  if(c.children.length>0)return;
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');
+    const sz=Math.random()*2+1;
+    s.className='star';
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s`;
+    c.appendChild(s);
+  }
+}
+
+async function loadHome(){
+  generateStars();
+  const {data:profile}=await sb.from('profiles').select('username').eq('id',currentUser.id).single();
+  document.getElementById('home-username').textContent=profile?profile.username:currentUser.email.split('@')[0];
+
+  const {data:games}=await sb.from('king_games').select('*').eq('owner_id',currentUser.id).order('created_at',{ascending:false}).limit(5);
+  const hist=document.getElementById('home-history');
+  const list=document.getElementById('hh-list');
+  if(games&&games.length>0){
+    hist.style.display='';
+    list.innerHTML='';
+    games.forEach(g=>{
+      const d=new Date(g.created_at);
+      const ds=d.toLocaleDateString('pt-PT',{day:'numeric',month:'short',year:'numeric'});
+      const item=document.createElement('div');
+      item.className='hh-item';
+      item.innerHTML=`<div><div class="hh-name">${g.name}</div><div class="hh-date">${ds}</div></div><button class="hh-btn" data-gid="${g.id}">Continuar →</button>`;
+      item.querySelector('.hh-btn').addEventListener('click',()=>loadGame(g.id));
+      list.appendChild(item);
+    });
+  } else {
+    hist.style.display='none';
+  }
+  hideLoading();
+  showScreen('home');
+}
+
+// ── KING CLOUD ──
+async function startNewKing(){
+  showLoading();
+  const today=new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'short'});
+  const {data:game,error}=await sb.from('king_games').insert({owner_id:currentUser.id,name:'King — '+today}).select().single();
+  if(error){hideLoading();toast('Erro ao criar partida');return;}
+  currentGameId=game.id;
+  S=defaultS();
+  await syncPlayers();
+  hideLoading();
+  showScreen('king');
+  renderKing();
+}
+
+async function loadGame(gameId){
+  showLoading();
+  currentGameId=gameId;
+  S=defaultS();
+  const {data:players}=await sb.from('king_players').select('*').eq('game_id',gameId).order('position');
+  if(players&&players.length>0){
+    S.players=players.map(p=>({id:p.id,name:p.name,color:p.color}));
+    S.nid=Math.max(...S.players.map(p=>p.id))+1;
+  }
+  const {data:rounds}=await sb.from('king_rounds').select('*').eq('game_id',gameId);
+  if(rounds&&rounds.length>0){
+    rounds.forEach(r=>{S.rounds[r.round_number]=r.data;});
+    S.cur=Math.max(...rounds.map(r=>r.round_number));
+  }
+  hideLoading();
+  showScreen('king');
+  renderKing();
+}
+
+async function syncPlayers(){
+  await sb.from('king_players').delete().eq('game_id',currentGameId);
+  const rows=S.players.map((p,i)=>({game_id:currentGameId,name:p.name,color:p.color,position:i}));
+  const {data}=await sb.from('king_players').insert(rows).select();
+  if(data){
+    // update local ids to db ids
+    data.forEach((row,i)=>{
+      const old=S.players[i].id;
+      S.players[i].id=row.id;
+      // migrate rounds
+      Object.values(S.rounds).forEach(rd=>{
+        PEN_ROWS.forEach(pr=>{
+          if(rd.pen&&rd.pen[pr.key]&&rd.pen[pr.key][old]!==undefined){
+            rd.pen[pr.key][row.id]=rd.pen[pr.key][old];
+            delete rd.pen[pr.key][old];
+          }
+        });
+        if(rd.festas)rd.festas.forEach(f=>{
+          if(f.v&&f.v[old]!==undefined){f.v[row.id]=f.v[old];delete f.v[old];}
+        });
+      });
+    });
+    S.nid=Math.max(...S.players.map(p=>p.id))+1;
+  }
+}
+
+async function syncRound(r){
+  if(!S.rounds[r])return;
+  const {data:ex}=await sb.from('king_rounds').select('id').eq('game_id',currentGameId).eq('round_number',r).maybeSingle();
+  if(ex){
+    await sb.from('king_rounds').update({data:S.rounds[r]}).eq('game_id',currentGameId).eq('round_number',r);
+  } else {
+    await sb.from('king_rounds').insert({game_id:currentGameId,round_number:r,data:S.rounds[r]});
+  }
+}
+
+function goHome(){loadHome();}
+
+// ── KING CALCULATIONS ──
 function initRound(r){
   if(!S.rounds[r]){
     const pen={};
@@ -246,29 +479,23 @@ function initRound(r){
     const rd=S.rounds[r];
     S.players.forEach(p=>{
       PEN_ROWS.forEach(pr=>{if(!rd.pen[pr.key])rd.pen[pr.key]={};if(rd.pen[pr.key][p.id]===undefined)rd.pen[pr.key][p.id]=0;});
-      rd.festas.forEach(f=>{if(!f.v)f.v={};if(f.v[p.id]===undefined)f.v[p.id]=0;});
+      if(rd.festas)rd.festas.forEach(f=>{if(!f.v)f.v={};if(f.v[p.id]===undefined)f.v[p.id]=0;});
     });
   }
 }
-
-// ═══════════════ CALCULATIONS ═══════════════
 function t1(r){
   const rd=S.rounds[r];if(!rd)return{};
   const t={};S.players.forEach(p=>{t[p.id]=0;});
-  PEN_ROWS.forEach(pr=>{S.players.forEach(p=>{t[p.id]-=(rd.pen[pr.key]&&rd.pen[pr.key][p.id])||0;});});
+  PEN_ROWS.forEach(pr=>{S.players.forEach(p=>{t[p.id]-=(rd.pen&&rd.pen[pr.key]&&rd.pen[pr.key][p.id])||0;});});
   return t;
 }
 function t2(r){
   const rd=S.rounds[r];if(!rd)return{};
   const t={};S.players.forEach(p=>{t[p.id]=0;});
-  rd.festas.forEach(f=>{S.players.forEach(p=>{t[p.id]+=(f.v[p.id]||0);});});
+  if(rd.festas)rd.festas.forEach(f=>{S.players.forEach(p=>{t[p.id]+=(f.v&&f.v[p.id])||0;});});
   return t;
 }
-function gt(r){
-  const a=t1(r),b=t2(r),g={};
-  S.players.forEach(p=>{g[p.id]=(a[p.id]||0)+(b[p.id]||0);});
-  return g;
-}
+function gt(r){const a=t1(r),b=t2(r),g={};S.players.forEach(p=>{g[p.id]=(a[p.id]||0)+(b[p.id]||0);});return g;}
 function allTotals(){
   const t={};S.players.forEach(p=>{t[p.id]=0;});
   for(let r=1;r<=NUM_ROUNDS;r++){if(S.rounds[r]){const g=gt(r);S.players.forEach(p=>{t[p.id]+=g[p.id]||0;});}}
@@ -278,13 +505,11 @@ function rankings(){
   const all=allTotals();
   return [...S.players].sort((a,b)=>all[b.id]-all[a.id]).map((p,i)=>({...p,total:all[p.id],rank:i+1}));
 }
-
-// ═══════════════ FORMAT ═══════════════
 function fmt(v){if(!v)return'0';return v>0?'+'+v:String(v);}
 function sc(v,pig){if(v===0)return'cz';if(pig)return v>0?'cp':'cn';return v<0?'cp':'cn';}
 function ini(n){return n.slice(0,2).toUpperCase();}
 
-// ═══════════════ RENDER ═══════════════
+// ── KING RENDER ──
 function renderPills(){
   const c=document.getElementById('round-pills');c.innerHTML='';
   for(let r=1;r<=NUM_ROUNDS;r++){
@@ -295,7 +520,6 @@ function renderPills(){
     c.appendChild(b);
   }
 }
-
 function renderTotals(){
   const c=document.getElementById('totals-bar');c.innerHTML='';
   const rnk=rankings();
@@ -303,102 +527,65 @@ function renderTotals(){
   rnk.forEach((p,i)=>{
     const d=document.createElement('div');
     d.className='tc'+(i===0?' r1':'');
-    d.innerHTML=`
-      <div class="tc-avatar" style="background:${p.color}22;color:${p.color}">${ini(p.name)}</div>
-      <div class="tc-info">
-        <input class="tc-name-inp" type="text" value="${p.name}" maxlength="14" data-pid="${p.id}"/>
-        <div class="tc-rank">${i<3?medals[i]+' ':''}${i+1}º lugar</div>
-      </div>
-      <div class="tc-score">${p.total}</div>`;
+    d.innerHTML=`<div class="tc-avatar" style="background:${p.color}22;color:${p.color}">${ini(p.name)}</div><div class="tc-info"><input class="tc-name-inp" type="text" value="${p.name}" maxlength="14" data-pid="${p.id}"/><div class="tc-rank">${i<3?medals[i]+' ':''}${i+1}º lugar</div></div><div class="tc-score">${p.total}</div>`;
     const inp=d.querySelector('.tc-name-inp');
-    inp.addEventListener('blur',()=>{
+    inp.addEventListener('blur',async()=>{
       const n=inp.value.trim();
       if(n&&n!==p.name){
         const pl=S.players.find(x=>x.id===p.id);
-        if(pl){pl.name=n;save();renderKing();toast('Nome atualizado!');}
+        if(pl){pl.name=n;await syncPlayers();renderKing();toast('Nome atualizado!');}
       }
     });
     inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();});
     c.appendChild(d);
   });
 }
-
 function renderTable(){
   const tbl=document.getElementById('scorecard');
   initRound(S.cur);
   const rd=S.rounds[S.cur];
   const R1=t1(S.cur),R2=t2(S.cur),GT=gt(S.cur);
   const np=S.players.length;
-
   let h='<thead><tr><th>Categoria</th>';
   S.players.forEach(p=>{h+=`<th><span class="pdot" style="background:${p.color}"></span>${p.name}</th>`;});
   h+='</tr></thead><tbody>';
-
-  // Penalizações
   h+=`<tr class="row-sh"><td colspan="${1+np}">Penalizações (pontos negativos)</td></tr>`;
   PEN_ROWS.forEach(pr=>{
     h+=`<tr><td>${pr.label}</td>`;
-    S.players.forEach(p=>{
-      const v=rd.pen[pr.key]?rd.pen[pr.key][p.id]||0:0;
-      h+=`<td><input class="sc" type="number" value="${v}" data-t="pen" data-k="${pr.key}" data-pid="${p.id}"/></td>`;
-    });
+    S.players.forEach(p=>{const v=rd.pen&&rd.pen[pr.key]?rd.pen[pr.key][p.id]||0:0;h+=`<td><input class="sc" type="number" value="${v}" data-t="pen" data-k="${pr.key}" data-pid="${p.id}"/></td>`;});
     h+='</tr>';
   });
-
-  // Total 1
   h+=`<tr class="row-t1"><td>Total 1 (pontos negativos)</td>`;
   S.players.forEach(p=>{h+=`<td class="cmp ${sc(R1[p.id],false)}" data-t1="${p.id}">${fmt(R1[p.id])}</td>`;});
   h+='</tr>';
-
-  // Festas
   h+=`<tr class="row-sh"><td colspan="${1+np}">Festas (pontos positivos)</td></tr>`;
   rd.festas.forEach((f,i)=>{
     h+=`<tr><td><input class="festa-label-inp" type="text" value="${f.label}" data-fi="${i}"/></td>`;
-    S.players.forEach(p=>{
-      const v=f.v[p.id]||0;
-      h+=`<td><input class="sc" type="number" value="${v}" data-t="festa" data-fi="${i}" data-pid="${p.id}"/></td>`;
-    });
+    S.players.forEach(p=>{h+=`<td><input class="sc" type="number" value="${f.v&&f.v[p.id]||0}" data-t="festa" data-fi="${i}" data-pid="${p.id}"/></td>`;});
     h+='</tr>';
   });
-
-  // Total 2
   h+=`<tr class="row-t2"><td>Total 2 (pontos positivos)</td>`;
   S.players.forEach(p=>{h+=`<td class="cmp ${sc(R2[p.id],true)}" data-t2="${p.id}">${fmt(R2[p.id])}</td>`;});
   h+='</tr>';
-
-  // Grand total
   h+=`<tr class="row-gt"><td>♛ Soma Total</td>`;
   S.players.forEach(p=>{h+=`<td class="cmp cg" data-gt="${p.id}">${fmt(GT[p.id])}</td>`;});
   h+='</tr></tbody>';
-
   tbl.innerHTML=h;
-
-  // Score inputs
   tbl.querySelectorAll('.sc').forEach(el=>{
     el.addEventListener('input',()=>{
       const pid=parseInt(el.dataset.pid),v=parseInt(el.value)||0;
       initRound(S.cur);
-      if(el.dataset.t==='pen'){
-        S.rounds[S.cur].pen[el.dataset.k][pid]=v;
-      } else {
-        S.rounds[S.cur].festas[parseInt(el.dataset.fi)].v[pid]=v;
-      }
-      save();updateTotals();
+      if(el.dataset.t==='pen'){S.rounds[S.cur].pen[el.dataset.k][pid]=v;}
+      else{S.rounds[S.cur].festas[parseInt(el.dataset.fi)].v[pid]=v;}
+      updateTotals();
     });
   });
-
-  // Festa label inputs
   tbl.querySelectorAll('.festa-label-inp').forEach(el=>{
-    el.addEventListener('blur',()=>{
-      const fi=parseInt(el.dataset.fi),lbl=el.value.trim();
-      if(lbl){S.rounds[S.cur].festas[fi].label=lbl;save();}
-    });
+    el.addEventListener('blur',()=>{const fi=parseInt(el.dataset.fi),l=el.value.trim();if(l&&S.rounds[S.cur])S.rounds[S.cur].festas[fi].label=l;});
     el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});
   });
-
   document.getElementById('btn-rm-festa').style.display=rd.festas.length>1?'':'none';
 }
-
 function updateTotals(){
   const R1=t1(S.cur),R2=t2(S.cur),GT=gt(S.cur);
   S.players.forEach(p=>{
@@ -411,35 +598,44 @@ function updateTotals(){
   });
   renderTotals();
 }
-
 function renderKing(){renderPills();renderTotals();renderTable();}
 
-// ═══════════════ ACTIONS ═══════════════
-function openKing(){
-  document.getElementById('screen-home').classList.remove('active');
-  document.getElementById('screen-king').classList.add('active');
+// ── KING ACTIONS ──
+async function saveRound(){
+  initRound(S.cur);
+  showLoading();
+  await syncRound(S.cur);
+  hideLoading();
   renderKing();
-}
-function goHome(){
-  document.getElementById('screen-king').classList.remove('active');
-  document.getElementById('screen-home').classList.add('active');
-}
-function saveRound(){
-  initRound(S.cur);save();renderKing();toast('Ronda '+S.cur+' guardada!');
+  toast('Ronda '+S.cur+' guardada ☁️');
   if(Object.keys(S.rounds).length>=NUM_ROUNDS){
     const w=rankings()[0];
     setTimeout(()=>{toast('♛ '+w.name+' lidera com '+w.total+' pts!');confetti();},400);
   }
 }
-function doReset(){
-  if(confirm('Reiniciar toda a partida?')){S=DEFAULT();save();renderKing();toast('Partida reiniciada');}
+async function doReset(){
+  if(confirm('Reiniciar toda a partida?')){
+    showLoading();
+    await sb.from('king_rounds').delete().eq('game_id',currentGameId);
+    S=defaultS();
+    await syncPlayers();
+    hideLoading();
+    renderKing();
+    toast('Partida reiniciada');
+  }
 }
-function doAddFesta(){initRound(S.cur);const n=S.rounds[S.cur].festas.length+1;const v={};S.players.forEach(p=>{v[p.id]=0;});S.rounds[S.cur].festas.push({label:'Festa '+n,v});save();renderTable();toast('Festa adicionada');}
+function doAddFesta(){
+  initRound(S.cur);
+  const n=S.rounds[S.cur].festas.length+1;
+  const v={};S.players.forEach(p=>{v[p.id]=0;});
+  S.rounds[S.cur].festas.push({label:'Festa '+n,v});
+  renderTable();toast('Festa adicionada');
+}
 function doRemoveFesta(){
-  if(S.rounds[S.cur]&&S.rounds[S.cur].festas.length>1){S.rounds[S.cur].festas.pop();save();renderTable();toast('Festa removida');}
+  if(S.rounds[S.cur]&&S.rounds[S.cur].festas.length>1){S.rounds[S.cur].festas.pop();renderTable();toast('Festa removida');}
 }
 
-// ═══════════════ ADD PLAYER ═══════════════
+// ── ADD PLAYER ──
 let selColor=PALETTE[0];
 function openAddPlayer(){
   selColor=PALETTE[S.players.length%PALETTE.length];
@@ -459,21 +655,21 @@ function renderCpicker(){
     c.appendChild(d);
   });
 }
-function confirmPlayer(){
+async function confirmPlayer(){
   const name=document.getElementById('pname').value.trim();
   if(!name){toast('Insere um nome');return;}
   if(S.players.find(p=>p.name.toLowerCase()===name.toLowerCase())){toast('Nome já existe');return;}
-  const id=S.nid++;
-  S.players.push({id,name,color:selColor});
-  Object.keys(S.rounds).forEach(r=>{
-    const rd=S.rounds[r];
-    PEN_ROWS.forEach(pr=>{if(rd.pen[pr.key])rd.pen[pr.key][id]=0;});
-    rd.festas.forEach(f=>{f.v[id]=0;});
+  const tmpId=S.nid++;
+  S.players.push({id:tmpId,name,color:selColor});
+  Object.values(S.rounds).forEach(rd=>{
+    PEN_ROWS.forEach(pr=>{if(rd.pen&&rd.pen[pr.key])rd.pen[pr.key][tmpId]=0;});
+    if(rd.festas)rd.festas.forEach(f=>{if(f.v)f.v[tmpId]=0;});
   });
-  save();closeModal();renderKing();toast(name+' adicionado!');
+  await syncPlayers();
+  closeModal();renderKing();toast(name+' adicionado!');
 }
 
-// ═══════════════ TOAST & CONFETTI ═══════════════
+// ── TOAST & CONFETTI ──
 let tt;
 function toast(msg){
   const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
@@ -493,8 +689,16 @@ function confetti(){
   setTimeout(()=>c.innerHTML='',4000);
 }
 
-// ═══════════════ INIT ═══════════════
-load();
+// ── INIT ──
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(session){
+    currentUser=session.user;
+    await loadHome();
+  } else {
+    hideLoading();
+    showScreen('auth');
+  }
+});
 </script>
 </body>
 </html>
