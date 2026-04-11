@@ -400,8 +400,14 @@ async function loadHome(){
 async function startNewKing(){
   showLoading();
   const today=new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'short'});
-  const {data:game,error}=await sb.from('king_games').insert({owner_id:currentUser.id,name:'King — '+today}).select().single();
-  if(error){hideLoading();toast('Erro ao criar partida');return;}
+  const gameName='King — '+today+' '+Date.now();
+  const {data:game,error}=await sb.from('king_games').insert({owner_id:currentUser.id,name:gameName}).select().single();
+  if(error){
+    console.error('Erro king_games insert:',JSON.stringify(error));
+    hideLoading();
+    toast('Erro: '+error.message);
+    return;
+  }
   currentGameId=game.id;
   S=defaultS();
   await syncPlayers();
@@ -432,7 +438,8 @@ async function loadGame(gameId){
 async function syncPlayers(){
   await sb.from('king_players').delete().eq('game_id',currentGameId);
   const rows=S.players.map((p,i)=>({game_id:currentGameId,name:p.name,color:p.color,position:i}));
-  const {data}=await sb.from('king_players').insert(rows).select();
+  const {data,error:spe}=await sb.from('king_players').insert(rows).select();
+  if(spe){console.error('syncPlayers error:',JSON.stringify(spe));}
   if(data){
     // update local ids to db ids
     data.forEach((row,i)=>{
