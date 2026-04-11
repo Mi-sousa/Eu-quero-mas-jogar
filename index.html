@@ -328,7 +328,9 @@ async function doAuth(){
     if(!username){hideLoading();errEl.textContent='Escolhe um nome de utilizador.';return;}
     const {data,error}=await sb.auth.signUp({email,password:pass});
     if(error){hideLoading();errEl.textContent=transErr(error.message);return;}
-    await sb.from('profiles').insert({id:data.user.id,username});
+    if(data&&data.user){
+      await sb.from('profiles').insert({id:data.user.id,username}).select().single();
+    }
   } else {
     const {error}=await sb.auth.signInWithPassword({email,password:pass});
     if(error){hideLoading();errEl.textContent=transErr(error.message);return;}
@@ -697,9 +699,23 @@ function confetti(){
 }
 
 // ── INIT ──
+// Timeout safety — never stay stuck on loading
+setTimeout(()=>{
+  if(document.getElementById('loading')&&!document.getElementById('loading').classList.contains('hidden')){
+    hideLoading();
+    showScreen('auth');
+  }
+},5000);
+
 sb.auth.onAuthStateChange(async(event,session)=>{
   if(session){
     currentUser=session.user;
+    // Ensure profile exists
+    const {data:prof}=await sb.from('profiles').select('id').eq('id',currentUser.id).maybeSingle();
+    if(!prof){
+      const username=currentUser.email.split('@')[0];
+      await sb.from('profiles').insert({id:currentUser.id,username}).select().single();
+    }
     await loadHome();
   } else {
     hideLoading();
