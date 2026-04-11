@@ -701,31 +701,49 @@ function confetti(){
 }
 
 // ── INIT ──
-// Timeout safety — never stay stuck on loading
-setTimeout(()=>{
-  if(document.getElementById('loading')&&!document.getElementById('loading').classList.contains('hidden')){
+async function initApp(){
+  try {
+    const {data:{session}} = await sb.auth.getSession();
+    if(session){
+      currentUser = session.user;
+      // Ensure profile exists
+      const {data:prof} = await sb.from('profiles').select('id,username').eq('id',currentUser.id).maybeSingle();
+      if(!prof){
+        const username = currentUser.email.split('@')[0];
+        await sb.from('profiles').insert({id:currentUser.id, username});
+      } else if(!prof.username){
+        await sb.from('profiles').update({username:currentUser.email.split('@')[0]}).eq('id',currentUser.id);
+      }
+      await loadHome();
+    } else {
+      hideLoading();
+      showScreen('auth');
+    }
+  } catch(e) {
+    console.error('initApp error:',e);
     hideLoading();
     showScreen('auth');
   }
-},5000);
+}
 
+// After login/register, reload the app state
 sb.auth.onAuthStateChange(async(event,session)=>{
-  if(session){
-    currentUser=session.user;
-    // Ensure profile exists with username
-    const {data:prof}=await sb.from('profiles').select('id,username').eq('id',currentUser.id).maybeSingle();
+  if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED') && session && !currentUser){
+    currentUser = session.user;
+    const {data:prof} = await sb.from('profiles').select('id,username').eq('id',currentUser.id).maybeSingle();
     if(!prof){
-      const username=currentUser.email.split('@')[0];
-      await sb.from('profiles').insert({id:currentUser.id,username}).select().single();
-    } else if(!prof.username){
-      await sb.from('profiles').update({username:currentUser.email.split('@')[0]}).eq('id',currentUser.id);
+      const username = currentUser.email.split('@')[0];
+      await sb.from('profiles').insert({id:currentUser.id, username});
     }
     await loadHome();
-  } else {
+  } else if(event==='SIGNED_OUT'){
+    currentUser = null;
     hideLoading();
     showScreen('auth');
   }
 });
+
+initApp();
 </script>
 </body>
 </html>
