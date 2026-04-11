@@ -375,6 +375,8 @@ async function loadHome(){
   generateStars();
   const {data:profile}=await sb.from('profiles').select('username').eq('id',currentUser.id).single();
   document.getElementById('home-username').textContent=profile?profile.username:currentUser.email.split('@')[0];
+  // Also fix profile if username is missing
+  if(profile&&!profile.username){await sb.from('profiles').update({username:currentUser.email.split('@')[0]}).eq('id',currentUser.id);}
 
   const {data:games}=await sb.from('king_games').select('*').eq('owner_id',currentUser.id).order('created_at',{ascending:false}).limit(5);
   const hist=document.getElementById('home-history');
@@ -402,7 +404,7 @@ async function loadHome(){
 async function startNewKing(){
   showLoading();
   const today=new Date().toLocaleDateString('pt-PT',{day:'numeric',month:'short'});
-  const gameName='King — '+today+' '+Date.now();
+  const gameName='King — '+today;
   const {data:game,error}=await sb.from('king_games').insert({owner_id:currentUser.id,name:gameName}).select().single();
   if(error){
     console.error('Erro king_games insert:',JSON.stringify(error));
@@ -710,11 +712,13 @@ setTimeout(()=>{
 sb.auth.onAuthStateChange(async(event,session)=>{
   if(session){
     currentUser=session.user;
-    // Ensure profile exists
-    const {data:prof}=await sb.from('profiles').select('id').eq('id',currentUser.id).maybeSingle();
+    // Ensure profile exists with username
+    const {data:prof}=await sb.from('profiles').select('id,username').eq('id',currentUser.id).maybeSingle();
     if(!prof){
       const username=currentUser.email.split('@')[0];
       await sb.from('profiles').insert({id:currentUser.id,username}).select().single();
+    } else if(!prof.username){
+      await sb.from('profiles').update({username:currentUser.email.split('@')[0]}).eq('id',currentUser.id);
     }
     await loadHome();
   } else {
